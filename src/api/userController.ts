@@ -1,6 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
-import request from '@/request'
+import request from '@/requests'
 
 /** 此处后端没有提供注释 GET /api/v1/user/current */
 export async function current(options?: { [key: string]: any }) {
