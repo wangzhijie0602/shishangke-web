@@ -1,4 +1,8 @@
 declare namespace API {
+  type loginParams = {
+    remember?: boolean
+  }
+
   type Result = {
     code?: number
     msg?: string
