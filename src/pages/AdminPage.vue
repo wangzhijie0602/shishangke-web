@@ -11,6 +11,7 @@ import {
   Card,
   Select,
   Popconfirm,
+  Badge,
 } from 'ant-design-vue'
 import {
   SearchOutlined,
@@ -21,7 +22,6 @@ import {
   UnlockOutlined,
 } from '@ant-design/icons-vue'
 import { create, get, ban, unban, deleteUsingGet, getUserList, update } from '@/api/adminController'
-import { toNumber } from 'lodash-es'
 
 // 用户列表数据
 const userList = ref<API.UserVO[]>([])
@@ -281,18 +281,30 @@ const columns = [
     dataIndex: 'status',
     key: 'status',
     customRender: ({ record }: { record: API.UserVO }) => {
-      return record?.status === 'ENABLED' ? '正常' : '禁用'
+      const statusText = record?.status === 'ENABLED' ? '正常' : '禁用'
+      const statusColor = record?.status === 'ENABLED' ? 'success' : 'error'
+      return h(Badge, {
+        status: statusColor,
+        text: statusText,
+        style: { color: statusColor },
+      })
     },
   },
   {
     title: '最后登录时间',
     dataIndex: 'lastLoginTime',
     key: 'lastLoginTime',
+    customRender: ({ text }: { text: string | undefined }) => {
+      return text ? new Date(text).toLocaleString() : '-'
+    },
   },
   {
     title: '创建时间',
     dataIndex: 'createdAt',
     key: 'createdAt',
+    customRender: ({ text }: { text: string | undefined }) => {
+      return text ? new Date(text).toLocaleString() : '-'
+    },
   },
   {
     title: '操作',
