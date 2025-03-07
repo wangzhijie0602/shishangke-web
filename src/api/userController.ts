@@ -4,7 +4,7 @@ import request from '@/requests'
 
 /** 此处后端没有提供注释 GET /api/v1/user/current */
 export async function current(options?: { [key: string]: any }) {
-  return request<API.Result>('/api/v1/user/current', {
+  return request<API.ResultUserVO>('/api/v1/user/current', {
     method: 'GET',
     ...(options || {}),
   })
@@ -17,7 +17,7 @@ export async function login(
   body: API.UserLoginRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.Result>('/api/v1/user/login', {
+  return request<API.ResultSaTokenInfo>('/api/v1/user/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -32,7 +32,7 @@ export async function login(
 
 /** 此处后端没有提供注释 GET /api/v1/user/logout */
 export async function logout(options?: { [key: string]: any }) {
-  return request<API.Result>('/api/v1/user/logout', {
+  return request<API.ResultVoid>('/api/v1/user/logout', {
     method: 'GET',
     ...(options || {}),
   })
@@ -40,7 +40,7 @@ export async function logout(options?: { [key: string]: any }) {
 
 /** 此处后端没有提供注释 POST /api/v1/user/register */
 export async function register(body: API.UserRegisterRequest, options?: { [key: string]: any }) {
-  return request<API.Result>('/api/v1/user/register', {
+  return request<API.ResultLong>('/api/v1/user/register', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

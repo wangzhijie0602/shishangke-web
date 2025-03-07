@@ -4,10 +4,10 @@ import { message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { UserOutlined, LockOutlined } from '@ant-design/icons-vue'
 import { login } from '@/api/userController'
-import { useLoginUserStore } from '@/stores/useLoginUserStore'
+import { useUserInfoStore } from '@/stores/useUserInfoStore.ts'
 
 const router = useRouter()
-const loginUserStore = useLoginUserStore()
+const userInfoStore = useUserInfoStore()
 
 // 表单数据
 const formState = reactive({
@@ -28,16 +28,21 @@ const rules = {
 const handleLogin = async () => {
   loading.value = true
   try {
-    const res = await login(formState)
-    if (res.data.code === 0) {
+    // 构建登录请求参数
+    const loginParams = {} as API.loginParams
+    const loginBody = {
+      username: formState.username,
+      password: formState.password,
+    }
+
+    const res = await login(loginParams, loginBody)
+    if (res.data.code === 1) {
       message.success('登录成功')
       // 更新用户信息到 store
-      if (res.data.data) {
-        loginUserStore.setLoginUser(res.data.data)
-      }
+      await userInfoStore.fetchUserInfo()
       // 跳转到主页或者重定向的页面
       const redirectPath = new URLSearchParams(window.location.search).get('redirect') || '/'
-      router.push(redirectPath)
+      await router.push(redirectPath)
     } else {
       message.error(res.data.msg || '登录失败，请检查用户名和密码')
     }
@@ -87,7 +92,7 @@ const handleLogin = async () => {
       </a-form>
       <div class="login-actions">
         <a href="javascript:;">忘记密码？</a>
-        <a href="javascript:;">注册账号</a>
+        <router-link to="/register">注册账号</router-link>
       </div>
     </div>
   </div>
