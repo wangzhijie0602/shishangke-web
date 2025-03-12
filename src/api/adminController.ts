@@ -3,7 +3,7 @@
 import request from '@/requests'
 
 /** 此处后端没有提供注释 POST /api/v1/admin */
-export async function create1(body: API.UserCreateRequest, options?: { [key: string]: any }) {
+export async function create2(body: API.UserCreateRequest, options?: { [key: string]: any }) {
   return request<API.ResultLong>('/api/v1/admin', {
     method: 'POST',
     headers: {
@@ -43,9 +43,9 @@ export async function ban(
 }
 
 /** 此处后端没有提供注释 GET /api/v1/admin/${param0}/delete */
-export async function delete1(
+export async function delete2(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
-  params: API.delete1Params,
+  params: API.delete2Params,
   options?: { [key: string]: any }
 ) {
   const { id: param0, ...queryParams } = params
@@ -109,7 +109,7 @@ export async function getUserList(
 }
 
 /** 此处后端没有提供注释 POST /api/v1/admin/update */
-export async function update1(body: API.UserUpdateRequest, options?: { [key: string]: any }) {
+export async function update2(body: API.UserUpdateRequest, options?: { [key: string]: any }) {
   return request<API.ResultVoid>('/api/v1/admin/update', {
     method: 'POST',
     headers: {

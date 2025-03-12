@@ -7,6 +7,7 @@ import MonitorPage from '@/pages/MonitorPage.vue'
 import AdminPage from '@/pages/AdminPage.vue'
 import MerchantPage from '@/pages/MerchantPage.vue'
 import MerchantDetailPage from '@/pages/MerchantDetailPage.vue'
+import MenuPage from '@/pages/MenuPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -51,6 +52,11 @@ const router = createRouter({
       path: '/merchant/:id',
       name: 'merchantDetail',
       component: MerchantDetailPage,
+    },
+    {
+      path: '/menu/:id',
+      name: 'menu',
+      component: MenuPage,
     },
   ],
 })

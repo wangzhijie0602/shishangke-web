@@ -7,7 +7,26 @@ declare namespace API {
     id: string
   }
 
+  type delete2Params = {
+    id: string
+  }
+
   type deleteUsingGETParams = {
+    id: string
+  }
+
+  type getMenuByMerchantParams = {
+    merchantId: string
+    pageNum?: number
+    pageSize?: number
+  }
+
+  type getMenuListParams = {
+    pageNum?: number
+    pageSize?: number
+  }
+
+  type getMenuParams = {
     id: string
   }
 
@@ -35,6 +54,52 @@ declare namespace API {
 
   type loginParams = {
     remember?: boolean
+  }
+
+  type MenuCreateRequest = {
+    merchantId: string
+    name: string
+    description?: string
+    price: number
+    category?: string
+    imageUrl?: string
+    status?: string
+    sortOrder?: number
+  }
+
+  type MenuQueryRequest = {
+    merchantId?: string
+    name?: string
+    category?: string
+    status?: string
+    minPrice?: number
+    maxPrice?: number
+  }
+
+  type MenuUpdateRequest = {
+    menuId: string
+    merchantId?: string
+    name?: string
+    description?: string
+    price?: number
+    category?: string
+    imageUrl?: string
+    status?: string
+    sortOrder?: number
+  }
+
+  type MenuVO = {
+    menuId?: string
+    merchantId?: string
+    name?: string
+    description?: string
+    price?: number
+    category?: string
+    imageUrl?: string
+    status?: string
+    sortOrder?: number
+    createdAt?: string
+    updatedAt?: string
   }
 
   type MerchantCreateRequest = {
@@ -84,6 +149,20 @@ declare namespace API {
     asc?: boolean
   }
 
+  type PageMenuVO = {
+    records?: MenuVO[]
+    total?: number
+    size?: number
+    current?: number
+    orders?: OrderItem[]
+    optimizeCountSql?: PageMenuVO
+    searchCount?: PageMenuVO
+    optimizeJoinOfCountSql?: boolean
+    maxLimit?: number
+    countId?: string
+    pages?: number
+  }
+
   type PageMerchantVO = {
     records?: MerchantVO[]
     total?: number
@@ -112,16 +191,34 @@ declare namespace API {
     pages?: number
   }
 
+  type ResultInteger = {
+    code?: number
+    msg?: string
+    data?: number
+  }
+
   type ResultLong = {
     code?: number
     msg?: string
     data?: number
   }
 
+  type ResultMenuVO = {
+    code?: number
+    msg?: string
+    data?: MenuVO
+  }
+
   type ResultMerchantVO = {
     code?: number
     msg?: string
     data?: MerchantVO
+  }
+
+  type ResultPageMenuVO = {
+    code?: number
+    msg?: string
+    data?: PageMenuVO
   }
 
   type ResultPageMerchantVO = {

@@ -1,35 +1,54 @@
 <template>
-  <a-card title="店铺管理" :bordered="false">
+  <a-card title="店铺管理" :bordered="false" class="merchant-page">
     <!-- 搜索表单 -->
-    <a-form :model="searchForm" layout="inline" class="mb-4">
-      <a-form-item label="店铺名称" name="name">
-        <a-input v-model:value="searchForm.name" placeholder="请输入店铺名称" allow-clear />
-      </a-form-item>
-      <a-form-item label="状态" name="status">
-        <a-select v-model:value="searchForm.status" placeholder="请选择状态" allow-clear>
-          <a-select-option value="1">正常</a-select-option>
-          <a-select-option value="0">停用</a-select-option>
-        </a-select>
-      </a-form-item>
-      <a-form-item label="最低价格" name="minPrice">
-        <a-input-number v-model:value="searchForm.minPrice" placeholder="请输入最低价格" />
-      </a-form-item>
-      <a-form-item>
-        <a-button type="primary" @click="handleSearch" :loading="searchLoading">
-          <template #icon>
-            <search-outlined />
-          </template>
-          搜索
-        </a-button>
-        <a-button class="ml-4" @click="handleReset">重置</a-button>
-        <a-button class="ml-4" type="primary" @click="showCreateModal">
-          <template #icon>
-            <plus-outlined />
-          </template>
-          添加店铺
-        </a-button>
-      </a-form-item>
-    </a-form>
+    <div class="search-wrapper">
+      <a-form :model="searchForm" layout="inline" class="search-form">
+        <a-row :gutter="16" style="width: 100%">
+          <a-col :xs="24" :sm="12" :md="8" :lg="6">
+            <a-form-item label="店铺名称" name="name">
+              <a-input v-model:value="searchForm.name" placeholder="请输入店铺名称" allow-clear />
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :sm="12" :md="8" :lg="6">
+            <a-form-item label="状态" name="status">
+              <a-select
+                v-model:value="searchForm.status"
+                placeholder="请选择状态"
+                allow-clear
+                style="width: 100%"
+              >
+                <a-select-option value="1">正常</a-select-option>
+                <a-select-option value="0">停用</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :sm="12" :md="8" :lg="6">
+            <a-form-item label="最低价格" name="minPrice">
+              <a-input-number
+                v-model:value="searchForm.minPrice"
+                placeholder="请输入最低价格"
+                style="width: 100%"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :sm="24" :md="24" :lg="6" class="action-buttons">
+            <a-form-item>
+              <a-space>
+                <a-button type="primary" @click="handleSearch" :loading="searchLoading">
+                  <template #icon><search-outlined /></template>
+                  搜索
+                </a-button>
+                <a-button @click="handleReset">重置</a-button>
+                <a-button type="primary" @click="showCreateModal">
+                  <template #icon><plus-outlined /></template>
+                  添加店铺
+                </a-button>
+              </a-space>
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
+    </div>
 
     <!-- 店铺列表 -->
     <a-table
@@ -39,40 +58,69 @@
       :loading="loading"
       :pagination="false"
       size="middle"
+      class="merchant-table"
+      :scroll="{ x: 1200 }"
+      bordered
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'logo'">
-          <img v-if="record.logo" :src="record.logo" style="width: 50px; height: 50px" />
-          <span v-else>-</span>
+          <div class="logo-container">
+            <img v-if="record.logo" :src="record.logo" alt="店铺Logo" />
+            <a-avatar v-else shape="square" :size="50" class="default-logo">
+              {{ record.name ? record.name.charAt(0) : '?' }}
+            </a-avatar>
+          </div>
         </template>
         <template v-if="column.key === 'fullAddress'">
-          {{
-            [record.province, record.city, record.district, record.street, record.addressDetail]
-              .filter((s) => s)
-              .join(' ') || '-'
-          }}
+          <a-tooltip
+            :title="
+              [record.province, record.city, record.district, record.street, record.addressDetail]
+                .filter((s) => s)
+                .join(' ') || '-'
+            "
+          >
+            <span class="ellipsis-text">
+              {{
+                [record.province, record.city, record.district, record.street, record.addressDetail]
+                  .filter((s) => s)
+                  .join(' ') || '-'
+              }}
+            </span>
+          </a-tooltip>
         </template>
         <template v-if="column.key === 'operatingHours'">
           {{ `${record.openTime || '-'} - ${record.closeTime || '-'}` }}
         </template>
         <template v-if="column.key === 'status'">
-          <a-badge
-            :color="record.status === 1 ? '#52c41a' : '#f50'"
-            :text="record.status === 1 ? '正常' : '停用'"
-          />
+          <a-tag :color="record.status === 1 ? 'success' : 'error'">
+            {{ record.status === 1 ? '正常' : '停用' }}
+          </a-tag>
+        </template>
+        <template v-if="column.key === 'minPrice'">
+          <span class="price">¥{{ record.minPrice || 0 }}</span>
         </template>
         <template v-if="column.key === 'action'">
           <a-space>
-            <router-link :to="`/merchant/${record.id}`">
-              <a-button type="primary">详情</a-button>
-            </router-link>
+            <a-button type="link" size="small" @click="router.push(`/merchant/${record.id}`)">
+              <template #icon><eye-outlined /></template>
+              详情
+            </a-button>
+            <a-divider type="vertical" />
+            <a-button type="link" size="small" @click="router.push(`/menu/${record.id}`)">
+              <template #icon><menu-outlined /></template>
+              管理菜单
+            </a-button>
+            <a-divider type="vertical" />
             <a-popconfirm
               title="确定要删除该店铺吗？"
               ok-text="确定"
               cancel-text="取消"
               @confirm="handleDelete(record)"
             >
-              <a-button type="primary" danger>删除</a-button>
+              <a-button type="link" danger size="small">
+                <template #icon><delete-outlined /></template>
+                删除
+              </a-button>
             </a-popconfirm>
           </a-space>
         </template>
@@ -80,15 +128,17 @@
     </a-table>
 
     <!-- 分页 -->
-    <a-pagination
-      class="mt-4"
-      v-model:current="current"
-      v-model:page-size="pageSize"
-      :total="total"
-      show-size-changer
-      show-quick-jumper
-      @change="handlePageChange"
-    />
+    <div class="pagination-wrapper">
+      <a-pagination
+        v-model:current="current"
+        v-model:page-size="pageSize"
+        :total="total"
+        show-size-changer
+        show-quick-jumper
+        :show-total="(total: number) => `共 ${total} 条记录`"
+        @change="handlePageChange"
+      />
+    </div>
 
     <!-- 新增弹窗 -->
     <a-modal
@@ -96,8 +146,15 @@
       title="新增店铺"
       :confirm-loading="modalLoading"
       @ok="handleSave"
+      width="600px"
     >
-      <a-form :model="form" :rules="rules" ref="formRef">
+      <a-form
+        :model="form"
+        :rules="rules"
+        ref="formRef"
+        :label-col="{ span: 4 }"
+        :wrapper-col="{ span: 20 }"
+      >
         <a-form-item label="店铺名称" name="name">
           <a-input v-model:value="form.name" placeholder="请输入店铺名称" />
         </a-form-item>
@@ -105,11 +162,28 @@
           <a-input v-model:value="form.phone" placeholder="请输入联系电话" />
         </a-form-item>
         <a-form-item label="最低价格" name="minPrice">
-          <a-input-number v-model:value="form.minPrice" placeholder="请输入最低价格" :min="0" />
+          <a-input-number
+            v-model:value="form.minPrice"
+            placeholder="请输入最低价格"
+            :min="0"
+            style="width: 100%"
+          />
         </a-form-item>
         <a-form-item label="店铺Logo" name="logo">
-          <a-upload name="logo" :show-upload-list="false" :before-upload="() => false">
-            <a-button>上传图片</a-button>
+          <a-upload
+            name="logo"
+            list-type="picture-card"
+            :show-upload-list="false"
+            :before-upload="() => false"
+            class="logo-uploader"
+          >
+            <div v-if="form.logo">
+              <img :src="form.logo" alt="logo" style="width: 100%" />
+            </div>
+            <div v-else class="upload-placeholder">
+              <plus-outlined />
+              <div style="margin-top: 8px">上传图片</div>
+            </div>
           </a-upload>
         </a-form-item>
       </a-form>
@@ -121,7 +195,14 @@
 import { ref, reactive, onMounted } from 'vue'
 import { create, getMerchantList, deleteUsingGet } from '@/api/merchantController'
 import { message } from 'ant-design-vue'
-import { SearchOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import {
+  SearchOutlined,
+  PlusOutlined,
+  EyeOutlined,
+  MenuOutlined,
+  DeleteOutlined,
+} from '@ant-design/icons-vue'
+import router from '@/router'
 
 const merchantList = ref<API.MerchantVO[]>([])
 const total = ref(0)
@@ -137,27 +218,24 @@ const searchForm = reactive({
 })
 
 const columns = [
-  { title: 'ID', dataIndex: 'id', key: 'id' },
-  { title: '店铺Logo', key: 'logo' },
-  { title: '店铺名称', dataIndex: 'name', key: 'name' },
+  { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
+  { title: '店铺Logo', key: 'logo', width: 100, align: 'center' },
+  { title: '店铺名称', dataIndex: 'name', key: 'name', width: 150, ellipsis: true },
   {
     title: '详细地址',
     key: 'fullAddress',
-    customRender: (record: API.MerchantVO) =>
-      [record.province, record.city, record.district, record.street, record.addressDetail]
-        .filter((s) => s)
-        .join(' ') || '-',
+    width: 200,
+    ellipsis: true,
   },
-  { title: '联系电话', dataIndex: 'phone', key: 'phone' },
+  { title: '联系电话', dataIndex: 'phone', key: 'phone', width: 120 },
   {
     title: '营业时间',
     key: 'operatingHours',
-    customRender: (record: API.MerchantVO) =>
-      `${record.openTime || '-'} - ${record.closeTime || '-'}`,
+    width: 150,
   },
-  { title: '最低价格', key: 'minPrice', dataIndex: 'minPrice', align: 'right' },
-  { title: '状态', key: 'status', align: 'center' },
-  { title: '操作', key: 'action', align: 'center', width: 200 },
+  { title: '最低价格', key: 'minPrice', dataIndex: 'minPrice', width: 100, align: 'right' },
+  { title: '状态', key: 'status', width: 80, align: 'center' },
+  { title: '操作', key: 'action', fixed: 'right', width: 250, align: 'center' },
 ]
 
 // 弹窗相关
@@ -275,8 +353,102 @@ onMounted(() => {
 </script>
 
 <style scoped>
-img {
+.merchant-page {
+  background-color: #fff;
+}
+
+.search-wrapper {
+  margin-bottom: 24px;
+  background-color: #fafafa;
+  padding: 16px;
+  border-radius: 4px;
+}
+
+.search-form {
+  width: 100%;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+}
+
+.merchant-table {
+  margin-bottom: 16px;
+}
+
+.logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo-container img {
+  width: 50px;
+  height: 50px;
   border-radius: 4px;
   object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.default-logo {
+  background-color: #1890ff;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+}
+
+.ellipsis-text {
+  display: inline-block;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.price {
+  font-weight: 500;
+  color: #ff4d4f;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.logo-uploader {
+  width: 128px;
+  height: 128px;
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #999;
+}
+
+:deep(.ant-upload-select-picture-card) {
+  width: 128px;
+  height: 128px;
+  margin-right: 8px;
+  margin-bottom: 8px;
+  text-align: center;
+  vertical-align: top;
+  background-color: #fafafa;
+  border: 1px dashed #d9d9d9;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: border-color 0.3s;
+}
+
+:deep(.ant-upload-select-picture-card:hover) {
+  border-color: #1890ff;
 }
 </style>
