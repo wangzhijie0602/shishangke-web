@@ -9,6 +9,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AAvatar: typeof import('ant-design-vue/es')['Avatar']
+    ABadge: typeof import('ant-design-vue/es')['Badge']
     AButton: typeof import('ant-design-vue/es')['Button']
     ACard: typeof import('ant-design-vue/es')['Card']
     ACol: typeof import('ant-design-vue/es')['Col']
@@ -18,6 +19,7 @@ declare module 'vue' {
     AForm: typeof import('ant-design-vue/es')['Form']
     AFormItem: typeof import('ant-design-vue/es')['FormItem']
     AInput: typeof import('ant-design-vue/es')['Input']
+    AInputNumber: typeof import('ant-design-vue/es')['InputNumber']
     AInputPassword: typeof import('ant-design-vue/es')['InputPassword']
     ALayout: typeof import('ant-design-vue/es')['Layout']
     ALayoutContent: typeof import('ant-design-vue/es')['LayoutContent']
@@ -35,7 +37,10 @@ declare module 'vue' {
     ASpace: typeof import('ant-design-vue/es')['Space']
     ASpin: typeof import('ant-design-vue/es')['Spin']
     ATable: typeof import('ant-design-vue/es')['Table']
+    ATextarea: typeof import('ant-design-vue/es')['Textarea']
+    ATimePicker: typeof import('ant-design-vue/es')['TimePicker']
     ATypographyLink: typeof import('ant-design-vue/es')['TypographyLink']
+    AUpload: typeof import('ant-design-vue/es')['Upload']
     GlobalHeader: typeof import('./src/components/GlobalHeader.vue')['default']
     GlobalSider: typeof import('./src/components/GlobalSider.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

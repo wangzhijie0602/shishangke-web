@@ -3,7 +3,20 @@ declare namespace API {
     id: string
   }
 
+  type delete1Params = {
+    id: string
+  }
+
   type deleteUsingGETParams = {
+    id: string
+  }
+
+  type getMerchantListParams = {
+    pageNum?: number
+    pageSize?: number
+  }
+
+  type getMerchantParams = {
     id: string
   }
 
@@ -24,9 +37,65 @@ declare namespace API {
     remember?: boolean
   }
 
+  type MerchantCreateRequest = {
+    name?: string
+    phone?: string
+  }
+
+  type MerchantQueryRequest = {
+    name?: string
+    phone?: string
+    status?: string
+  }
+
+  type MerchantUpdateRequest = {
+    id?: string
+    name?: string
+    phone?: string
+    province?: string
+    city?: string
+    district?: string
+    street?: string
+    addressDetail?: string
+    description?: string
+  }
+
+  type MerchantVO = {
+    id?: string
+    userId?: string
+    name?: string
+    logo?: string
+    phone?: string
+    province?: string
+    city?: string
+    district?: string
+    street?: string
+    addressDetail?: string
+    openTime?: string
+    closeTime?: string
+    description?: string
+    minPrice?: number
+    status?: string
+    createTime?: string
+  }
+
   type OrderItem = {
     column?: string
     asc?: boolean
+  }
+
+  type PageMerchantVO = {
+    records?: MerchantVO[]
+    total?: number
+    size?: number
+    current?: number
+    orders?: OrderItem[]
+    optimizeCountSql?: PageMerchantVO
+    searchCount?: PageMerchantVO
+    optimizeJoinOfCountSql?: boolean
+    maxLimit?: number
+    countId?: string
+    pages?: number
   }
 
   type PageUserVO = {
@@ -47,6 +116,18 @@ declare namespace API {
     code?: number
     msg?: string
     data?: number
+  }
+
+  type ResultMerchantVO = {
+    code?: number
+    msg?: string
+    data?: MerchantVO
+  }
+
+  type ResultPageMerchantVO = {
+    code?: number
+    msg?: string
+    data?: PageMerchantVO
   }
 
   type ResultPageUserVO = {
@@ -95,6 +176,11 @@ declare namespace API {
 
   type unbanParams = {
     id: string
+  }
+
+  type UserChangePassword = {
+    oldPassword: string
+    newPassword: string
   }
 
   type UserCreateRequest = {

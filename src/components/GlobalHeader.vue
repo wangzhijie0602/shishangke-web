@@ -76,6 +76,12 @@ const originItems = [
     label: '管理员',
     title: '管理员',
   },
+  {
+    key: '/merchant',
+    icon: () => h(HomeOutlined),
+    label: '我的店铺',
+    title: '我的店铺',
+  },
 ]
 
 // 根据权限过滤菜单项

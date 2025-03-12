@@ -21,7 +21,7 @@ import {
   LockOutlined,
   UnlockOutlined,
 } from '@ant-design/icons-vue'
-import { create, get, ban, unban, deleteUsingGet, getUserList, update } from '@/api/adminController'
+import { create1, get, ban, unban, delete1, getUserList, update1 } from '@/api/adminController'
 
 // 用户列表数据
 const userList = ref<API.UserVO[]>([])
@@ -124,7 +124,7 @@ const handleCreate = async () => {
   try {
     await createFormRef.value.validate()
     createLoading.value = true
-    const res = await create(createForm)
+    const res = await create1(createForm)
     if (res.data?.code === 1) {
       message.success('创建用户成功')
       createVisible.value = false
@@ -171,7 +171,7 @@ const handleUpdate = async () => {
   try {
     await editFormRef.value.validate()
     editLoading.value = true
-    const res = await update(editForm)
+    const res = await update1(editForm)
     if (res.data?.code === 1) {
       message.success('更新用户成功')
       editVisible.value = false
@@ -194,7 +194,7 @@ const handleDelete = async (record: API.UserVO) => {
   }
 
   try {
-    const res = await deleteUsingGet({ id: record.id })
+    const res = await delete1({ id: record.id })
     if (res.data?.code === 1) {
       message.success('删除用户成功')
       await fetchUserList()
