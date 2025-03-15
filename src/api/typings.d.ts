@@ -288,6 +288,12 @@ declare namespace API {
     phone?: string
   }
 
+  type UserInfoUpdateRequest = {
+    nickname?: string
+    email?: string
+    phone?: string
+  }
+
   type UserLoginRequest = {
     username: string
     password: string

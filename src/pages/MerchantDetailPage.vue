@@ -21,11 +21,15 @@
                 <img :src="form.logo" alt="店铺Logo" />
                 <div class="logo-actions">
                   <a-button type="primary" size="small" @click="handleViewLogo">
-                    <template #icon><EyeOutlined /></template>
+                    <template #icon>
+                      <EyeOutlined />
+                    </template>
                     预览
                   </a-button>
                   <a-button danger size="small" @click="handleRemoveLogo">
-                    <template #icon><DeleteOutlined /></template>
+                    <template #icon>
+                      <DeleteOutlined />
+                    </template>
                     删除
                   </a-button>
                 </div>
@@ -55,29 +59,21 @@
         <a-divider orientation="left">地址信息</a-divider>
         <a-row :gutter="24">
           <a-col :span="24">
-            <a-form-item label="所在地区" name="region" required>
+            <a-form-item label="所在地区" name="province" required>
               <a-spin :spinning="regionLoading" tip="加载地区数据中...">
-                <a-cascader
-                  v-model:value="selectedRegion"
-                  :options="regionOptions"
-                  :load-data="loadRegionData"
-                  placeholder="请选择省/市/区"
-                  @change="handleRegionChange"
+                <area-cascader
+                  type="street"
+                  :value="areaValue"
+                  placeholder="请选择省/市/区/街道"
+                  :onChange="handleAreaChange"
                   style="width: 100%"
-                  :fieldNames="{ label: 'label', value: 'value', children: 'children' }"
-                  expandTrigger="hover"
-                  changeOnSelect
-                >
-                  <template #suffixIcon><EnvironmentOutlined /></template>
-                  <template #notFoundContent>
-                    <div class="empty-content">
-                      <p>暂无数据</p>
-                    </div>
-                  </template>
-                </a-cascader>
+                />
               </a-spin>
-              <div class="address-preview" v-if="form.province || form.city || form.district">
-                当前选择: {{ form.province }} {{ form.city }} {{ form.district }}
+              <div
+                class="address-preview"
+                v-if="form.province || form.city || form.district || form.street"
+              >
+                当前选择: {{ form.province }} {{ form.city }} {{ form.district }} {{ form.street }}
               </div>
             </a-form-item>
           </a-col>
@@ -155,11 +151,15 @@
         <a-divider />
         <div class="form-actions">
           <a-button type="primary" html-type="submit" size="large">
-            <template #icon><SaveOutlined /></template>
+            <template #icon>
+              <SaveOutlined />
+            </template>
             保存修改
           </a-button>
           <a-button size="large" @click="handleCancel" style="margin-left: 16px">
-            <template #icon><RollbackOutlined /></template>
+            <template #icon>
+              <RollbackOutlined />
+            </template>
             返回
           </a-button>
         </div>
@@ -174,7 +174,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { getMerchant, update } from '@/api/merchantController'
@@ -184,8 +184,8 @@ import {
   PlusOutlined,
   EyeOutlined,
   DeleteOutlined,
-  EnvironmentOutlined,
 } from '@ant-design/icons-vue'
+import type { AreaItemType } from '@/components/AreaCascader'
 
 const router = useRouter()
 const route = useRoute()
@@ -193,301 +193,45 @@ const route = useRoute()
 const form = ref<API.MerchantVO>({})
 const uploading = ref(false)
 const previewVisible = ref(false)
-const selectedRegion = ref<string[]>([])
 const regionLoading = ref(false)
 
-// 地址相关数据
-interface RegionOption {
-  value: string
-  label: string
-  isLeaf: boolean
-  loading?: boolean
-  children?: RegionOption[]
-}
-
-// 省级数据
-const regionOptions = ref<RegionOption[]>([])
-
-// 省市区数据缓存
-const regionCache = reactive<{
-  provinces: RegionOption[]
-  cities: Record<string, RegionOption[]>
-  districts: Record<string, Record<string, RegionOption[]>>
-}>({
-  provinces: [],
-  cities: {},
-  districts: {},
+// 计算地址选择器的值
+const areaValue = computed(() => {
+  const { province, city, district, street } = form.value
+  return [province, city, district, street].filter(Boolean)
 })
 
-// 初始化省级数据
-const initProvinceData = async () => {
-  regionLoading.value = true
-  try {
-    // 这里可以替换为实际的API调用
-    // 模拟从API获取省份数据
-    const provinces = [
-      { code: '11', name: '北京市' },
-      { code: '12', name: '天津市' },
-      { code: '13', name: '河北省' },
-      { code: '14', name: '山西省' },
-      { code: '15', name: '内蒙古自治区' },
-      { code: '21', name: '辽宁省' },
-      { code: '22', name: '吉林省' },
-      { code: '23', name: '黑龙江省' },
-      { code: '31', name: '上海市' },
-      { code: '32', name: '江苏省' },
-      { code: '33', name: '浙江省' },
-      { code: '34', name: '安徽省' },
-      { code: '35', name: '福建省' },
-      { code: '36', name: '江西省' },
-      { code: '37', name: '山东省' },
-      { code: '41', name: '河南省' },
-      { code: '42', name: '湖北省' },
-      { code: '43', name: '湖南省' },
-      { code: '44', name: '广东省' },
-      { code: '45', name: '广西壮族自治区' },
-      { code: '46', name: '海南省' },
-      { code: '50', name: '重庆市' },
-      { code: '51', name: '四川省' },
-      { code: '52', name: '贵州省' },
-      { code: '53', name: '云南省' },
-      { code: '54', name: '西藏自治区' },
-      { code: '61', name: '陕西省' },
-      { code: '62', name: '甘肃省' },
-      { code: '63', name: '青海省' },
-      { code: '64', name: '宁夏回族自治区' },
-      { code: '65', name: '新疆维吾尔自治区' },
-      { code: '71', name: '台湾省' },
-      { code: '81', name: '香港特别行政区' },
-      { code: '82', name: '澳门特别行政区' },
-    ]
+// 处理地址选择器变化
+const handleAreaChange = (values?: string[], options?: AreaItemType[]) => {
+  if (values && values.length > 0) {
+    form.value.province = values[0] || ''
+    form.value.city = values.length > 1 ? values[1] : ''
+    form.value.district = values.length > 2 ? values[2] : ''
+    form.value.street = values.length > 3 ? values[3] : ''
 
-    // 转换为Cascader需要的格式
-    regionCache.provinces = provinces.map((province) => ({
-      value: province.code,
-      label: province.name,
-      isLeaf: false,
-    }))
-
-    regionOptions.value = regionCache.provinces
-  } catch (error) {
-    console.error('获取省份数据失败:', error)
-    message.error('获取地区数据失败')
-  } finally {
-    regionLoading.value = false
-  }
-}
-
-// 模拟城市数据获取
-const getCityData = async (provinceCode: string): Promise<RegionOption[]> => {
-  // 如果缓存中已有该省的城市数据，直接返回
-  if (regionCache.cities[provinceCode]) {
-    return regionCache.cities[provinceCode]
-  }
-
-  // 模拟API调用获取城市数据
-  // 这里只是示例数据，实际项目中应该从后端API获取
-  const cityDataMap: Record<string, { code: string; name: string }[]> = {
-    '11': [{ code: '1101', name: '北京市' }],
-    '12': [{ code: '1201', name: '天津市' }],
-    '44': [
-      { code: '4401', name: '广州市' },
-      { code: '4403', name: '深圳市' },
-      { code: '4406', name: '佛山市' },
-      { code: '4413', name: '惠州市' },
-      { code: '4419', name: '东莞市' },
-      { code: '4420', name: '中山市' },
-    ],
-    '31': [{ code: '3101', name: '上海市' }],
-    '51': [
-      { code: '5101', name: '成都市' },
-      { code: '5107', name: '绵阳市' },
-      { code: '5115', name: '宜宾市' },
-    ],
-    // 其他省份的城市数据...
-  }
-
-  // 获取当前省份的城市数据，如果没有则返回空数组
-  const cities = cityDataMap[provinceCode] || []
-
-  // 转换为Cascader需要的格式
-  const cityOptions = cities.map((city) => ({
-    value: city.code,
-    label: city.name,
-    isLeaf: false,
-  }))
-
-  // 缓存城市数据
-  regionCache.cities[provinceCode] = cityOptions
-
-  return cityOptions
-}
-
-// 模拟区县数据获取
-const getDistrictData = async (provinceCode: string, cityCode: string): Promise<RegionOption[]> => {
-  // 如果缓存中已有该市的区县数据，直接返回
-  if (regionCache.districts[provinceCode]?.[cityCode]) {
-    return regionCache.districts[provinceCode][cityCode]
-  }
-
-  // 模拟API调用获取区县数据
-  // 这里只是示例数据，实际项目中应该从后端API获取
-  const districtDataMap: Record<string, Record<string, { code: string; name: string }[]>> = {
-    '44': {
-      '4401': [
-        { code: '440103', name: '荔湾区' },
-        { code: '440104', name: '越秀区' },
-        { code: '440105', name: '海珠区' },
-        { code: '440106', name: '天河区' },
-        { code: '440111', name: '白云区' },
-        { code: '440112', name: '黄埔区' },
-      ],
-      '4403': [
-        { code: '440303', name: '罗湖区' },
-        { code: '440304', name: '福田区' },
-        { code: '440305', name: '南山区' },
-        { code: '440306', name: '宝安区' },
-        { code: '440307', name: '龙岗区' },
-        { code: '440308', name: '盐田区' },
-      ],
-    },
-    '11': {
-      '1101': [
-        { code: '110101', name: '东城区' },
-        { code: '110102', name: '西城区' },
-        { code: '110105', name: '朝阳区' },
-        { code: '110106', name: '丰台区' },
-        { code: '110107', name: '石景山区' },
-        { code: '110108', name: '海淀区' },
-      ],
-    },
-    // 其他城市的区县数据...
-  }
-
-  // 获取当前城市的区县数据，如果没有则返回空数组
-  const districts = districtDataMap[provinceCode]?.[cityCode] || []
-
-  // 转换为Cascader需要的格式
-  const districtOptions = districts.map((district) => ({
-    value: district.code,
-    label: district.name,
-    isLeaf: true,
-  }))
-
-  // 确保省份的districts对象已初始化
-  if (!regionCache.districts[provinceCode]) {
-    regionCache.districts[provinceCode] = {}
-  }
-
-  // 缓存区县数据
-  regionCache.districts[provinceCode][cityCode] = districtOptions
-
-  return districtOptions
-}
-
-// 动态加载地区数据
-const loadRegionData = async (selectedOptions: RegionOption[]) => {
-  const targetOption = selectedOptions[selectedOptions.length - 1]
-  targetOption.loading = true
-
-  try {
-    if (selectedOptions.length === 1) {
-      // 加载城市数据
-      const provinceCode = targetOption.value
-      const cities = await getCityData(provinceCode)
-      targetOption.children = cities
-    } else if (selectedOptions.length === 2) {
-      // 加载区县数据
-      const provinceCode = selectedOptions[0].value
-      const cityCode = targetOption.value
-      const districts = await getDistrictData(provinceCode, cityCode)
-      targetOption.children = districts
+    // 如果有区级数据，获取区级的地区码
+    if (options && options.length > 2 && options[2]) {
+      // 存储区域编码，如果需要可以添加到form中
+      const areaCode = options[2].code
+      console.log('区域编码:', areaCode)
     }
-  } catch (error) {
-    console.error('加载地区数据失败:', error)
-    message.error('加载地区数据失败')
-  } finally {
-    targetOption.loading = false
+  } else {
+    form.value.province = ''
+    form.value.city = ''
+    form.value.district = ''
+    form.value.street = ''
   }
-}
-
-// 处理地区选择变化
-const handleRegionChange = (value: string[]) => {
-  if (value.length > 0) {
-    // 查找省份名称
-    const province = regionOptions.value.find((item) => item.value === value[0])
-    form.value.province = province?.label || ''
-
-    if (value.length > 1) {
-      // 查找城市名称
-      const cities = regionCache.cities[value[0]] || []
-      const city = cities.find((item) => item.value === value[1])
-      form.value.city = city?.label || ''
-
-      if (value.length > 2) {
-        // 查找区县名称
-        const districts = regionCache.districts[value[0]]?.[value[1]] || []
-        const district = districts.find((item) => item.value === value[2])
-        form.value.district = district?.label || ''
-      } else {
-        form.value.district = ''
-      }
-    } else {
-      form.value.city = ''
-      form.value.district = ''
-    }
-  }
-}
-
-// 根据名称查找对应的编码
-const findRegionCode = (
-  provinceName: string,
-  cityName?: string,
-  districtName?: string,
-): string[] => {
-  const result: string[] = []
-
-  // 查找省份编码
-  const province = regionCache.provinces.find((item) => item.label === provinceName)
-  if (!province) return result
-
-  result.push(province.value)
-  if (!cityName) return result
-
-  // 确保已加载该省的城市数据
-  if (!regionCache.cities[province.value]) return result
-
-  // 查找城市编码
-  const city = regionCache.cities[province.value].find((item) => item.label === cityName)
-  if (!city) return result
-
-  result.push(city.value)
-  if (!districtName) return result
-
-  // 确保已加载该市的区县数据
-  if (!regionCache.districts[province.value]?.[city.value]) return result
-
-  // 查找区县编码
-  const district = regionCache.districts[province.value][city.value].find(
-    (item) => item.label === districtName,
-  )
-  if (district) {
-    result.push(district.value)
-  }
-
-  return result
 }
 
 const rules = {
   name: [{ required: true, message: '请输入店铺名称', trigger: 'blur' }],
   phone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
-  region: [{ required: true, message: '请选择所在地区', trigger: 'change' }],
+  province: [{ required: true, message: '请选择所在地区', trigger: 'change' }],
   addressDetail: [{ required: true, message: '请输入详细地址', trigger: 'blur' }],
 }
 
 onMounted(async () => {
-  // 初始化省份数据
-  await initProvinceData()
+  regionLoading.value = true
 
   const merchantId = route.params.id as string
   try {
@@ -499,39 +243,14 @@ onMounted(async () => {
         openTime: merchantData?.openTime,
         closeTime: merchantData?.closeTime,
       }
-
-      // 初始化地区选择器的值
-      if (form.value.province) {
-        // 预加载省市区数据，以便能够正确回显
-        const provinceObj = regionOptions.value.find((item) => item.label === form.value.province)
-        if (provinceObj) {
-          // 加载该省的城市数据
-          await getCityData(provinceObj.value)
-
-          if (form.value.city && regionCache.cities[provinceObj.value]) {
-            const cityObj = regionCache.cities[provinceObj.value].find(
-              (item) => item.label === form.value.city,
-            )
-            if (cityObj && form.value.district) {
-              // 加载该市的区县数据
-              await getDistrictData(provinceObj.value, cityObj.value)
-            }
-          }
-
-          // 设置选中的地区编码
-          selectedRegion.value = findRegionCode(
-            form.value.province,
-            form.value.city,
-            form.value.district,
-          )
-        }
-      }
     } else {
       message.error('获取店铺信息失败')
     }
   } catch (error) {
     console.error('获取店铺详情失败:', error)
     message.error('网络异常，请重试')
+  } finally {
+    regionLoading.value = false
   }
 })
 

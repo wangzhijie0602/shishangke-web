@@ -1,63 +1,156 @@
 <template>
-  <div class="userInfo">
-    <h1>个人详情</h1>
-    <div v-if="userInfo">
-      <p><strong>用户名:</strong> {{ userInfo.username }}</p>
-      <p><strong>昵称:</strong> {{ userInfo.nickname }}</p>
-      <p>
-        <strong>头像:</strong>
-        <span class="avatar-container">
-          <img
-            :src="userInfo.avatar || '/src/assets/default-avatar.jpg'"
-            alt="头像"
-            style="max-width: 100px; border-radius: 50%"
-          />
-          <div class="avatar-edit" @click="editAvatar">
-            <input
-              type="file"
-              accept="image/*"
-              style="display: none"
-              ref="avatarInput"
-              @change="handleUploadAvatar"
+  <div class="user-info-container">
+    <div class="user-info-card">
+      <h1 class="page-title">个人信息</h1>
+
+      <div v-if="userInfo" class="user-info-content">
+        <!-- 头像部分 -->
+        <div class="avatar-section">
+          <div class="avatar-container">
+            <img
+              :src="userInfo.avatar || '/src/assets/default-avatar.jpg'"
+              alt="头像"
+              class="user-avatar"
             />
-            修改头像
+            <div class="avatar-edit" @click="editAvatar">
+              <input
+                type="file"
+                accept="image/*"
+                style="display: none"
+                ref="avatarInput"
+                @change="handleUploadAvatar"
+              />
+              <i class="edit-icon">✏️</i>
+            </div>
           </div>
-        </span>
-      </p>
-      <p><strong>邮箱:</strong> {{ userInfo.email }}</p>
-      <p><strong>电话:</strong> {{ userInfo.phone }}</p>
-      <p>
-        <strong>密码:</strong> ********
-        <button @click="showPasswordForm = true">修改密码</button>
-      </p>
-      <div v-if="showPasswordForm" class="password-form">
-        <input type="password" v-model="oldPassword" placeholder="旧密码" required />
-        <input type="password" v-model="newPassword" placeholder="新密码" required />
-        <button @click="submitPasswordChange">确认</button>
-        <button @click="showPasswordForm = false">取消</button>
+          <div class="user-name">
+            <h2>{{ userInfo.nickname || userInfo.username }}</h2>
+            <span class="user-role">{{ getRoleName(userInfo.role) }}</span>
+          </div>
+        </div>
+
+        <!-- 基本信息部分 -->
+        <div class="info-section">
+          <h3 class="section-title">基本信息</h3>
+
+          <div class="info-row">
+            <div class="info-label">用户名</div>
+            <div class="info-value">{{ userInfo.username }}</div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-label">昵称</div>
+            <div class="info-value" v-if="!editMode.nickname">
+              {{ userInfo.nickname || '未设置' }}
+              <button class="edit-btn" @click="startEdit('nickname')">修改</button>
+            </div>
+            <div class="info-edit" v-else>
+              <input type="text" v-model="editForm.nickname" class="edit-input" />
+              <div class="edit-actions">
+                <button class="save-btn" @click="saveEdit('nickname')">保存</button>
+                <button class="cancel-btn" @click="cancelEdit('nickname')">取消</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-label">邮箱</div>
+            <div class="info-value" v-if="!editMode.email">
+              {{ userInfo.email || '未设置' }}
+              <button class="edit-btn" @click="startEdit('email')">修改</button>
+            </div>
+            <div class="info-edit" v-else>
+              <input type="email" v-model="editForm.email" class="edit-input" />
+              <div class="edit-actions">
+                <button class="save-btn" @click="saveEdit('email')">保存</button>
+                <button class="cancel-btn" @click="cancelEdit('email')">取消</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-label">电话</div>
+            <div class="info-value" v-if="!editMode.phone">
+              {{ userInfo.phone || '未设置' }}
+              <button class="edit-btn" @click="startEdit('phone')">修改</button>
+            </div>
+            <div class="info-edit" v-else>
+              <input type="tel" v-model="editForm.phone" class="edit-input" />
+              <div class="edit-actions">
+                <button class="save-btn" @click="saveEdit('phone')">保存</button>
+                <button class="cancel-btn" @click="cancelEdit('phone')">取消</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-label">密码</div>
+            <div class="info-value">
+              ********
+              <button class="edit-btn" @click="showPasswordForm = true">修改</button>
+            </div>
+          </div>
+
+          <div v-if="showPasswordForm" class="password-form">
+            <div class="form-group">
+              <label>旧密码</label>
+              <input type="password" v-model="oldPassword" placeholder="请输入旧密码" required />
+            </div>
+            <div class="form-group">
+              <label>新密码</label>
+              <input type="password" v-model="newPassword" placeholder="请输入新密码" required />
+            </div>
+            <div class="form-actions">
+              <button class="save-btn" @click="submitPasswordChange">确认修改</button>
+              <button class="cancel-btn" @click="showPasswordForm = false">取消</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 账户信息部分 -->
+        <div class="info-section">
+          <h3 class="section-title">账户信息</h3>
+
+          <div class="info-row">
+            <div class="info-label">账户状态</div>
+            <div class="info-value">
+              <span
+                :class="[
+                  'status-badge',
+                  userInfo.status === 'ENABLED' ? 'status-normal' : 'status-disabled',
+                ]"
+              >
+                {{ userInfo.status === 'ENABLED' ? '正常' : '已禁用' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-label">上次登录时间</div>
+            <div class="info-value">{{ formatTime(userInfo.lastLoginTime) }}</div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-label">创建时间</div>
+            <div class="info-value">{{ formatTime(userInfo.createdAt) }}</div>
+          </div>
+        </div>
       </div>
-      <p><strong>状态:</strong> {{ userInfo.status }}</p>
-      <p><strong>角色代码:</strong> {{ userInfo.role }}</p>
-      <p>
-        <strong>上次登录时间:</strong>
-        {{ formatTime(userInfo.lastLoginTime) }}
-      </p>
-      <p>
-        <strong>创建时间:</strong>
-        {{ formatTime(userInfo.createdAt) }}
-      </p>
-    </div>
-    <div v-else>
-      <p>加载中...</p>
+
+      <div v-else class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>加载中...</p>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { current, updatePassword, uploadAvatar } from '@/api/userController'
+import { onMounted, ref, reactive } from 'vue'
+import { current, updatePassword, uploadAvatar, updateInfo } from '@/api/userController'
 import { useUserInfoStore } from '@/stores/useUserInfoStore.ts'
 import dayjs from 'dayjs'
+import { message } from 'ant-design-vue'
 
 const userInfoStore = useUserInfoStore()
 const userInfo = ref(userInfoStore.userInfo)
@@ -69,8 +162,36 @@ const showPasswordForm = ref(false)
 const oldPassword = ref('')
 const newPassword = ref('')
 
+// 编辑模式状态
+const editMode = reactive({
+  nickname: false,
+  email: false,
+  phone: false,
+})
+
+// 编辑表单
+const editForm = reactive({
+  id: '',
+  nickname: '',
+  email: '',
+  phone: '',
+})
+
+// 获取角色名称
+const getRoleName = (roleCode: string | undefined) => {
+  if (!roleCode) return '普通用户'
+
+  const roleMap: Record<string, string> = {
+    ADMIN: '管理员',
+    USER: '普通用户',
+    MERCHANT: '商家',
+  }
+
+  return roleMap[roleCode] || '普通用户'
+}
+
 const formatTime = (time: string | undefined) => {
-  if (!time) return ''
+  if (!time) return '未知'
   return dayjs(time).format('YYYY-MM-DD HH:mm:ss')
 }
 
@@ -81,12 +202,10 @@ const uploadAvatarHandler = async (file: File) => {
     // 使用类型断言避免类型冲突
     await uploadAvatar(formData, { headers: { 'Content-Type': 'multipart/form-data' } })
     // 更新用户信息
-    const res = await current()
-    if (res.data.data) {
-      userInfo.value = res.data.data
-    }
+    await refreshUserInfo()
   } catch (error) {
     console.error('头像上传失败:', error)
+    message.error('头像上传失败，请重试')
   }
 }
 
@@ -103,18 +222,84 @@ const editAvatar = () => {
 }
 
 const submitPasswordChange = async () => {
+  if (!oldPassword.value || !newPassword.value) {
+    message.warning('请输入完整的密码信息')
+    return
+  }
+
   try {
     await updatePassword({
       oldPassword: oldPassword.value,
       newPassword: newPassword.value,
     })
     showPasswordForm.value = false
+    oldPassword.value = ''
+    newPassword.value = ''
+    message.success('密码修改成功')
   } catch (error) {
     console.error('密码修改失败:', error)
+    message.error('密码修改失败，请确认旧密码是否正确')
   }
 }
 
-onMounted(async () => {
+// 开始编辑某个字段
+const startEdit = (field: keyof typeof editMode) => {
+  // 重置其他字段的编辑状态
+  Object.keys(editMode).forEach((key) => {
+    if (key !== field) {
+      editMode[key as keyof typeof editMode] = false
+    }
+  })
+
+  // 设置当前字段为编辑状态
+  editMode[field] = true
+
+  // 初始化编辑表单
+  if (userInfo.value) {
+    editForm.id = userInfo.value.id || ''
+    editForm[field] = userInfo.value[field] || ''
+  }
+}
+
+// 取消编辑
+const cancelEdit = (field: keyof typeof editMode) => {
+  editMode[field] = false
+}
+
+// 保存编辑
+const saveEdit = async (field: keyof typeof editMode) => {
+  if (!userInfo.value || !userInfo.value.id) {
+    message.error('用户信息不完整，无法保存')
+    return
+  }
+
+  try {
+    await updateInfo({
+      [field]: editForm[field],
+    })
+
+    // 更新本地状态
+    if (userInfo.value) {
+      userInfo.value[field] = editForm[field]
+    }
+
+    // 更新store中的用户信息
+    await userInfoStore.setUserInfo(userInfo.value)
+
+    // 关闭编辑模式
+    editMode[field] = false
+
+    message.success(
+      `${field === 'nickname' ? '昵称' : field === 'email' ? '邮箱' : '电话'}修改成功`,
+    )
+  } catch (error) {
+    console.error('信息更新失败:', error)
+    message.error('信息更新失败，请重试')
+  }
+}
+
+// 刷新用户信息
+const refreshUserInfo = async () => {
   try {
     const res = await current()
     if (res.data.data) {
@@ -124,29 +309,64 @@ onMounted(async () => {
   } catch (error) {
     console.error('获取用户信息失败:', error)
   }
+}
+
+onMounted(async () => {
+  await refreshUserInfo()
 })
 </script>
 
 <style scoped>
-.userInfo {
+.user-info-container {
+  display: flex;
+  justify-content: center;
   padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  margin: 20px;
 }
 
-.userInfo h1 {
+.user-info-card {
+  width: 100%;
+  max-width: 800px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+}
+
+.page-title {
   font-size: 24px;
-  margin-bottom: 20px;
+  color: #333;
+  margin-bottom: 30px;
+  text-align: center;
+  font-weight: 600;
 }
 
-.userInfo p {
-  margin-bottom: 10px;
+.user-info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+/* 头像部分样式 */
+.avatar-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
 }
 
 .avatar-container {
   position: relative;
-  display: inline-block;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.user-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .avatar-edit {
@@ -156,7 +376,6 @@ onMounted(async () => {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
-  color: white;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -165,23 +384,192 @@ onMounted(async () => {
   cursor: pointer;
 }
 
+.edit-icon {
+  font-size: 24px;
+  color: white;
+}
+
 .avatar-container:hover .avatar-edit {
   opacity: 1;
 }
 
-.password-form {
-  margin-top: 10px;
+.user-name {
+  display: flex;
+  flex-direction: column;
 }
 
-.password-form input {
-  margin: 5px 0;
-  padding: 8px;
-  width: 200px;
+.user-name h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #333;
 }
 
-.password-form button {
-  margin-left: 10px;
-  padding: 8px 16px;
+.user-role {
+  font-size: 14px;
+  color: #666;
+  margin-top: 5px;
+}
+
+/* 信息部分样式 */
+.info-section {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.section-title {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 15px;
+  font-weight: 500;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 15px;
+  align-items: center;
+}
+
+.info-label {
+  width: 100px;
+  font-weight: 500;
+  color: #666;
+}
+
+.info-value {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.edit-btn {
+  background-color: transparent;
+  border: none;
+  color: #1890ff;
   cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+}
+
+.edit-btn:hover {
+  text-decoration: underline;
+}
+
+.info-edit {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+}
+
+.edit-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.save-btn,
+.cancel-btn {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+}
+
+.save-btn {
+  background-color: #1890ff;
+  color: white;
+}
+
+.cancel-btn {
+  background-color: #f0f0f0;
+  color: #666;
+}
+
+/* 密码表单样式 */
+.password-form {
+  margin-top: 15px;
+  padding: 15px;
+  background-color: #f0f8ff;
+  border-radius: 4px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+/* 状态标签样式 */
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.status-normal {
+  background-color: #e6f7ff;
+  color: #1890ff;
+  border: 1px solid #91d5ff;
+}
+
+.status-disabled {
+  background-color: #fff1f0;
+  color: #ff4d4f;
+  border: 1px solid #ffa39e;
+}
+
+/* 加载中样式 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #1890ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>

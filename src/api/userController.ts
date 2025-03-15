@@ -50,6 +50,21 @@ export async function register(body: API.UserRegisterRequest, options?: { [key: 
   })
 }
 
+/** 此处后端没有提供注释 POST /api/v1/user/updateInfo */
+export async function updateInfo(
+  body: API.UserInfoUpdateRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.ResultVoid>('/api/v1/user/updateInfo', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
 /** 此处后端没有提供注释 POST /api/v1/user/updatePassword */
 export async function updatePassword(
   body: API.UserChangePassword,

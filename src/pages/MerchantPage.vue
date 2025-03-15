@@ -92,8 +92,8 @@
           {{ `${record.openTime || '-'} - ${record.closeTime || '-'}` }}
         </template>
         <template v-if="column.key === 'status'">
-          <a-tag :color="record.status === 1 ? 'success' : 'error'">
-            {{ record.status === 1 ? '正常' : '停用' }}
+          <a-tag :color="record.status === 'AUTO' ? 'success' : 'error'">
+            {{ record.status === 'AUTO' ? '正常' : '停用' }}
           </a-tag>
         </template>
         <template v-if="column.key === 'minPrice'">
@@ -161,6 +161,18 @@
         <a-form-item label="联系电话" name="phone">
           <a-input v-model:value="form.phone" placeholder="请输入联系电话" />
         </a-form-item>
+        <a-form-item label="所在地区" name="region" required>
+          <area-cascader
+            type="street"
+            :value="areaValue"
+            placeholder="请选择省/市/区/街道"
+            :onChange="handleAreaChange"
+            style="width: 100%"
+          />
+        </a-form-item>
+        <a-form-item label="详细地址" name="addressDetail">
+          <a-input v-model:value="form.addressDetail" placeholder="请输入详细地址" />
+        </a-form-item>
         <a-form-item label="最低价格" name="minPrice">
           <a-input-number
             v-model:value="form.minPrice"
@@ -192,7 +204,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { create, getMerchantList, deleteUsingGet } from '@/api/merchantController'
 import { message } from 'ant-design-vue'
 import {
@@ -246,11 +258,40 @@ const form = reactive({
   phone: '',
   minPrice: 0,
   logo: '',
+  province: '',
+  city: '',
+  district: '',
+  street: '',
+  addressDetail: '',
 })
+
+// 计算地址选择器的值
+const areaValue = computed(() => {
+  const { province, city, district, street } = form
+  return [province, city, district, street].filter(Boolean)
+})
+
+// 处理地址选择器变化
+const handleAreaChange = (values?: string[]) => {
+  if (values && values.length > 0) {
+    form.province = values[0] || ''
+    form.city = values.length > 1 ? values[1] : ''
+    form.district = values.length > 2 ? values[2] : ''
+    form.street = values.length > 3 ? values[3] : ''
+  } else {
+    form.province = ''
+    form.city = ''
+    form.district = ''
+    form.street = ''
+  }
+}
+
 const formRef = ref()
 const rules = {
   name: [{ required: true, message: '请输入店铺名称', trigger: 'blur' }],
   phone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
+  region: [{ required: true, message: '请选择所在地区', trigger: 'change' }],
+  addressDetail: [{ required: true, message: '请输入详细地址', trigger: 'blur' }],
   minPrice: [{ required: true, type: 'number', message: '请输入最低价格', trigger: 'change' }],
 }
 
@@ -307,6 +348,11 @@ const showCreateModal = () => {
   form.phone = ''
   form.minPrice = 0
   form.logo = ''
+  form.province = ''
+  form.city = ''
+  form.district = ''
+  form.street = ''
+  form.addressDetail = ''
 }
 
 // 保存操作（新增）
