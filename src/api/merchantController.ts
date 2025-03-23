@@ -30,6 +30,134 @@ export async function getMerchant(
   })
 }
 
+/** 此处后端没有提供注释 POST /api/v1/merchant/${param0}/update-address */
+export async function updateAddress(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.updateAddressParams,
+  options?: { [key: string]: any }
+) {
+  const { id: param0, ...queryParams } = params
+  return request<API.ResultString>(`/api/v1/merchant/${param0}/update-address`, {
+    method: 'POST',
+    params: {
+      ...queryParams,
+    },
+    ...(options || {}),
+  })
+}
+
+/** 此处后端没有提供注释 POST /api/v1/merchant/${param0}/update-business-hours */
+export async function updateBusinessHours(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.updateBusinessHoursParams,
+  options?: { [key: string]: any }
+) {
+  const { id: param0, ...queryParams } = params
+  return request<API.ResultString>(`/api/v1/merchant/${param0}/update-business-hours`, {
+    method: 'POST',
+    params: {
+      ...queryParams,
+    },
+    ...(options || {}),
+  })
+}
+
+/** 此处后端没有提供注释 POST /api/v1/merchant/${param0}/update-description */
+export async function updateDescription(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.updateDescriptionParams,
+  options?: { [key: string]: any }
+) {
+  const { id: param0, ...queryParams } = params
+  return request<API.ResultString>(`/api/v1/merchant/${param0}/update-description`, {
+    method: 'POST',
+    params: {
+      ...queryParams,
+    },
+    ...(options || {}),
+  })
+}
+
+/** 此处后端没有提供注释 POST /api/v1/merchant/${param0}/update-logo */
+export async function updateLogo(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.updateLogoParams,
+  options?: { [key: string]: any }
+) {
+  const { id: param0, ...queryParams } = params
+  return request<API.ResultString>(`/api/v1/merchant/${param0}/update-logo`, {
+    method: 'POST',
+    params: {
+      ...queryParams,
+    },
+    ...(options || {}),
+  })
+}
+
+/** 此处后端没有提供注释 POST /api/v1/merchant/${param0}/update-min-price */
+export async function updateMinPrice(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.updateMinPriceParams,
+  options?: { [key: string]: any }
+) {
+  const { id: param0, ...queryParams } = params
+  return request<API.ResultString>(`/api/v1/merchant/${param0}/update-min-price`, {
+    method: 'POST',
+    params: {
+      ...queryParams,
+    },
+    ...(options || {}),
+  })
+}
+
+/** 此处后端没有提供注释 POST /api/v1/merchant/${param0}/update-name */
+export async function updateName(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.updateNameParams,
+  options?: { [key: string]: any }
+) {
+  const { id: param0, ...queryParams } = params
+  return request<API.ResultString>(`/api/v1/merchant/${param0}/update-name`, {
+    method: 'POST',
+    params: {
+      ...queryParams,
+    },
+    ...(options || {}),
+  })
+}
+
+/** 此处后端没有提供注释 POST /api/v1/merchant/${param0}/update-phone */
+export async function updatePhone1(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.updatePhone1Params,
+  options?: { [key: string]: any }
+) {
+  const { id: param0, ...queryParams } = params
+  return request<API.ResultString>(`/api/v1/merchant/${param0}/update-phone`, {
+    method: 'POST',
+    params: {
+      ...queryParams,
+    },
+    ...(options || {}),
+  })
+}
+
+/** 此处后端没有提供注释 POST /api/v1/merchant/${param0}/update-status */
+export async function updateStatus(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.updateStatusParams,
+  options?: { [key: string]: any }
+) {
+  const { id: param0, ...queryParams } = params
+  return request<API.ResultString>(`/api/v1/merchant/${param0}/update-status`, {
+    method: 'POST',
+    params: {
+      ...queryParams,
+    },
+    ...(options || {}),
+  })
+}
+
 /** 此处后端没有提供注释 POST /api/v1/merchant/create */
 export async function create(body: API.MerchantCreateRequest, options?: { [key: string]: any }) {
   return request<API.ResultLong>('/api/v1/merchant/create', {

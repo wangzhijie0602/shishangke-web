@@ -8,6 +8,11 @@ import AdminPage from '@/pages/AdminPage.vue'
 import MerchantPage from '@/pages/MerchantPage.vue'
 import MerchantDetailPage from '@/pages/MerchantDetailPage.vue'
 import MenuPage from '@/pages/MenuPage.vue'
+import AdminMerchantPage from '@/pages/AdminMerchantPage.vue'
+import AdminMerchantDetailPage from '@/pages/AdminMerchantDetailPage.vue'
+import AdminUserPage from '@/pages/AdminUserPage.vue'
+import MerchantOrderPage from '@/pages/MerchantOrderPage.vue'
+import AdminOrderPage from '@/pages/AdminOrderPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -38,6 +43,30 @@ const router = createRouter({
       component: AdminPage,
     },
     {
+      path: '/admin/merchant',
+      name: 'adminMerchant',
+      component: AdminMerchantPage,
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
+      path: '/admin/merchant/:id',
+      name: 'adminMerchantDetail',
+      component: AdminMerchantDetailPage,
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
+      path: '/admin/user',
+      name: 'adminUser',
+      component: AdminUserPage,
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
+      path: '/admin/order',
+      name: 'adminOrder',
+      component: AdminOrderPage,
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
       path: '/user/info',
       name: 'userinfo',
       component: UserInfoPage,
@@ -52,6 +81,12 @@ const router = createRouter({
       path: '/merchant/:id',
       name: 'merchantDetail',
       component: MerchantDetailPage,
+    },
+    {
+      path: '/merchant/order',
+      name: 'merchantOrder',
+      component: MerchantOrderPage,
+      meta: { requiresAuth: true },
     },
     {
       path: '/menu/:id',

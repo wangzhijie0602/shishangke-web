@@ -20,7 +20,7 @@
       <!-- 用户信息展示栏 -->
       <a-col flex="120px">
         <div class="user-login-status">
-          <div v-if="userInfoStore.userInfo.id != 0">
+          <div v-if="userInfoStore.userInfo.id !== ''">
             <a-dropdown>
               <a-space>
                 <a-avatar :src="userInfoStore.userInfo.avatar" />
@@ -52,7 +52,7 @@ import { message, Modal } from 'ant-design-vue'
 import type { MenuProps } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { useUserInfoStore } from '@/stores/useUserInfoStore.ts'
-import { logout } from '@/api/userController.ts'
+import {  logout1 } from '@/api/userController.ts'
 
 const userInfoStore = useUserInfoStore()
 
@@ -75,12 +75,46 @@ const originItems = [
     icon: () => h(HomeOutlined),
     label: '管理员',
     title: '管理员',
+    children: [
+      {
+        key: '/admin',
+        label: '控制台',
+        title: '控制台',
+      },
+      {
+        key: '/admin/merchant',
+        label: '店铺管理',
+        title: '店铺管理',
+      },
+      {
+        key: '/admin/order',
+        label: '订单管理',
+        title: '订单管理',
+      },
+      {
+        key: '/admin/user',
+        label: '用户管理',
+        title: '用户管理',
+      }
+    ]
   },
   {
     key: '/merchant',
     icon: () => h(HomeOutlined),
     label: '我的店铺',
     title: '我的店铺',
+    children: [
+      {
+        key: '/merchant',
+        label: '店铺主页',
+        title: '店铺主页',
+      },
+      {
+        key: '/merchant/order',
+        label: '订单管理',
+        title: '订单管理',
+      }
+    ]
   },
 ]
 
@@ -90,7 +124,7 @@ const filterMenus = (menus = [] as MenuProps['items']) => {
     // 管理员才能看到 /admin 开头的菜单
     if (typeof menu?.key === 'string' && menu.key.startsWith('/admin')) {
       const userInfo = userInfoStore.userInfo
-      if (!userInfo || userInfo.role != 'ADMIN') {
+      if (!userInfo || userInfo.role !== 'ADMIN') {
         return false
       }
     }
@@ -124,7 +158,7 @@ const showConfirm = () => {
     okText: '确定',
     cancelText: '取消',
     async onOk() {
-      const res = await logout()
+      const res = await logout1()
       if (res.data.code === 1) {
         await userInfoStore.initUserInfo()
         message.success('退出登录成功')

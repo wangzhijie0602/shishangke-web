@@ -31,7 +31,7 @@ export async function login(
 }
 
 /** 此处后端没有提供注释 GET /api/v1/user/logout */
-export async function logout(options?: { [key: string]: any }) {
+export async function logout1(options?: { [key: string]: any }) {
   return request<API.ResultVoid>('/api/v1/user/logout', {
     method: 'GET',
     ...(options || {}),
@@ -46,6 +46,21 @@ export async function register(body: API.UserRegisterRequest, options?: { [key: 
       'Content-Type': 'application/json',
     },
     data: body,
+    ...(options || {}),
+  })
+}
+
+/** 此处后端没有提供注释 POST /api/v1/user/updateEmail */
+export async function updateEmail(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.updateEmailParams,
+  options?: { [key: string]: any }
+) {
+  return request<API.ResultString>('/api/v1/user/updateEmail', {
+    method: 'POST',
+    params: {
+      ...params,
+    },
     ...(options || {}),
   })
 }
@@ -65,6 +80,21 @@ export async function updateInfo(
   })
 }
 
+/** 此处后端没有提供注释 POST /api/v1/user/updateNickname */
+export async function updateNickname(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.updateNicknameParams,
+  options?: { [key: string]: any }
+) {
+  return request<API.ResultString>('/api/v1/user/updateNickname', {
+    method: 'POST',
+    params: {
+      ...params,
+    },
+    ...(options || {}),
+  })
+}
+
 /** 此处后端没有提供注释 POST /api/v1/user/updatePassword */
 export async function updatePassword(
   body: API.UserChangePassword,
@@ -76,6 +106,21 @@ export async function updatePassword(
       'Content-Type': 'application/json',
     },
     data: body,
+    ...(options || {}),
+  })
+}
+
+/** 此处后端没有提供注释 POST /api/v1/user/updatePhone */
+export async function updatePhone(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.updatePhoneParams,
+  options?: { [key: string]: any }
+) {
+  return request<API.ResultString>('/api/v1/user/updatePhone', {
+    method: 'POST',
+    params: {
+      ...params,
+    },
     ...(options || {}),
   })
 }
