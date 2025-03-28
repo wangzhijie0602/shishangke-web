@@ -34,24 +34,22 @@
                   </a-button>
                 </div>
               </div>
-              <a-upload
-                v-else
-                name="logo"
-                list-type="picture-card"
-                class="logo-uploader"
-                :show-upload-list="false"
-                :before-upload="beforeUpload"
-                @change="handleLogoChange"
-              >
-                <div v-if="uploading">
-                  <a-spin />
-                </div>
-                <div v-else class="upload-placeholder">
-                  <PlusOutlined />
-                  <div class="ant-upload-text">上传Logo</div>
-                </div>
-              </a-upload>
-              <div class="upload-hint">建议尺寸: 200px x 200px, 支持jpg、png格式</div>
+              <div v-else class="logo-upload-btn">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  style="display: none"
+                  ref="logoInput"
+                  @change="handleLogoChange"
+                />
+                <a-button type="dashed" @click="logoInput?.click()" :loading="uploading">
+                  <template #icon>
+                    <PlusOutlined />
+                  </template>
+                  上传Logo
+                </a-button>
+                <div class="upload-hint">建议尺寸: 200px x 200px, 支持jpg、png格式</div>
+              </div>
             </a-form-item>
           </a-col>
         </a-row>
@@ -140,10 +138,43 @@
           </a-col>
           <a-col :span="12">
             <a-form-item label="店铺状态" name="status">
-              <a-select v-model:value="form.status" placeholder="请选择状态">
-                <a-select-option value="ENABLED">正常营业</a-select-option>
-                <a-select-option value="DISABLED">暂停营业</a-select-option>
+              <a-select
+                v-model:value="form.status"
+                placeholder="请选择状态"
+                :disabled="['PENDING_REVIEW', 'REJECTED', 'BANNED'].includes(form.status as string)"
+              >
+                <a-select-option value="OPEN">营业中</a-select-option>
+                <a-select-option value="CLOSED">休息中</a-select-option>
+                <a-select-option value="SUSPENDED">暂停营业</a-select-option>
+                <a-select-option
+                  v-if="['PENDING_REVIEW'].includes(form.status as string)"
+                  value="PENDING_REVIEW"
+                  disabled
+                  >待审核
+                </a-select-option>
+                <a-select-option
+                  v-if="['REJECTED'].includes(form.status as string)"
+                  value="REJECTED"
+                  disabled
+                  >审核拒绝
+                </a-select-option>
+                <a-select-option
+                  v-if="['BANNED'].includes(form.status as string)"
+                  value="BANNED"
+                  disabled
+                  >已封禁
+                </a-select-option>
               </a-select>
+              <div
+                class="status-tip"
+                v-if="['PENDING_REVIEW', 'REJECTED', 'BANNED'].includes(form.status as string)"
+              >
+                <a-alert
+                  :message="getStatusTip(form.status as string)"
+                  :type="form.status === 'BANNED' ? 'error' : 'warning'"
+                  show-icon
+                />
+              </div>
             </a-form-item>
           </a-col>
         </a-row>
@@ -154,7 +185,9 @@
             <template #icon>
               <SaveOutlined />
             </template>
-            保存修改
+            <span v-if="form.status === 'PENDING_REVIEW'">修改信息并提交审核</span>
+            <span v-else-if="form.status === 'REJECTED'">保存并重审</span>
+            <span v-else>保存修改</span>
           </a-button>
           <a-button size="large" @click="handleCancel" style="margin-left: 16px">
             <template #icon>
@@ -167,7 +200,7 @@
     </a-card>
 
     <!-- Logo预览弹窗 -->
-    <a-modal v-model:visible="previewVisible" title="Logo预览" footer="{null}" centered>
+    <a-modal v-model:open="previewVisible" title="Logo预览" :footer="null" centered>
       <img alt="Logo预览" style="width: 100%" :src="form.logo" />
     </a-modal>
   </div>
@@ -177,7 +210,17 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { getMerchant, update } from '@/api/merchantController'
+import {
+  merchantGet,
+  merchantUpdateAddress,
+  merchantUpdateBusinesshours,
+  merchantUpdateDescription,
+  merchantUpdateLogo,
+  merchantUpdateMinprice,
+  merchantUpdateName,
+  merchantUpdatePhone,
+  merchantUpdateStatus,
+} from '@/api/merchantController'
 import {
   SaveOutlined,
   RollbackOutlined,
@@ -186,14 +229,27 @@ import {
   DeleteOutlined,
 } from '@ant-design/icons-vue'
 import type { AreaItemType } from '@/components/AreaCascader'
+import dayjs from 'dayjs'
+
+// 定义接口类型
+interface MerchantForm extends Omit<API.MerchantVO, 'openTime' | 'closeTime'> {
+  openTime?: dayjs.Dayjs | null
+  closeTime?: dayjs.Dayjs | null
+}
+
+// 定义组件名称
+defineOptions({
+  name: 'MerchantDetail',
+})
 
 const router = useRouter()
 const route = useRoute()
 
-const form = ref<API.MerchantVO>({})
+const form = ref<MerchantForm>({})
 const uploading = ref(false)
 const previewVisible = ref(false)
 const regionLoading = ref(false)
+const logoInput = ref<HTMLInputElement | null>(null)
 
 // 计算地址选择器的值
 const areaValue = computed(() => {
@@ -235,13 +291,20 @@ onMounted(async () => {
 
   const merchantId = route.params.id as string
   try {
-    const res = await getMerchant({ id: merchantId })
-    if (res.data.code === 1) {
+    const res = await merchantGet({ id: merchantId })
+    if (res.data.code === 20000) {
       const merchantData = res.data.data || {}
+
+      // 使用dayjs处理时间格式
+      const openTime = merchantData?.openTime ? dayjs(merchantData.openTime, 'HH:mm:ss') : undefined
+      const closeTime = merchantData?.closeTime
+        ? dayjs(merchantData.closeTime, 'HH:mm:ss')
+        : undefined
+
       form.value = {
         ...merchantData,
-        openTime: merchantData?.openTime,
-        closeTime: merchantData?.closeTime,
+        openTime,
+        closeTime,
       }
     } else {
       message.error('获取店铺信息失败')
@@ -262,13 +325,101 @@ const handleSubmit = async () => {
   }
 
   try {
-    const res = await update(form.value)
-    if (res.data.code === 1) {
-      message.success('店铺信息更新成功')
-      router.back()
-    } else {
-      message.error(res.data.msg || '更新失败')
+    const merchantId = form.value.id
+    if (!merchantId) {
+      message.error('店铺ID不能为空')
+      return
     }
+
+    // 更新基本信息
+    if (form.value.name) {
+      await merchantUpdateName({
+        id: merchantId,
+        name: form.value.name,
+      })
+    }
+    if (form.value.phone) {
+      await merchantUpdatePhone({
+        id: merchantId,
+        phone: form.value.phone,
+      })
+    }
+
+    // 更新地址信息
+    if (
+      form.value.province &&
+      form.value.city &&
+      form.value.district &&
+      form.value.street &&
+      form.value.addressDetail
+    ) {
+      await merchantUpdateAddress({
+        id: merchantId,
+        province: form.value.province,
+        city: form.value.city,
+        district: form.value.district,
+        street: form.value.street,
+        addressDetail: form.value.addressDetail,
+      })
+    }
+
+    // 更新营业时间
+    if (form.value.openTime && form.value.closeTime) {
+      const formattedOpenTime = form.value.openTime.format('HH:mm:ss')
+      const formattedCloseTime = form.value.closeTime.format('HH:mm:ss')
+
+      await merchantUpdateBusinesshours({
+        id: merchantId,
+        openTime: formattedOpenTime,
+        closeTime: formattedCloseTime,
+      })
+    }
+
+    // 更新描述
+    if (form.value.description) {
+      await merchantUpdateDescription({
+        id: merchantId,
+        description: form.value.description,
+      })
+    }
+
+    // 更新最低价格
+    if (form.value.minPrice !== undefined) {
+      await merchantUpdateMinprice({
+        id: merchantId,
+        minPrice: form.value.minPrice,
+      })
+    }
+
+    // 更新状态，排除特殊状态
+    if (form.value.status && !['BANNED'].includes(form.value.status)) {
+      // 如果是审核拒绝状态，保存时将状态更新为待审核
+      if (form.value.status === 'REJECTED') {
+        await merchantUpdateStatus({
+          id: merchantId,
+          status: 'PENDING_REVIEW',
+        })
+      }
+      // 对于非特殊状态，正常更新
+      else if (!['PENDING_REVIEW', 'REJECTED'].includes(form.value.status)) {
+        await merchantUpdateStatus({
+          id: merchantId,
+          status: form.value.status,
+        })
+      }
+    }
+
+    // 根据不同状态显示不同的成功提示
+    if (form.value.status === 'PENDING_REVIEW') {
+      message.success('信息修改成功，已重新提交审核')
+    } else if (form.value.status === 'REJECTED') {
+      message.success('信息修改成功，已提交重审')
+    } else {
+      message.success('店铺信息更新成功')
+    }
+
+    // 使用replace而不是back，避免路由堆栈问题
+    router.replace('/merchant')
   } catch (error) {
     console.error('更新店铺信息失败:', error)
     message.error('网络异常，请重试')
@@ -276,60 +427,122 @@ const handleSubmit = async () => {
 }
 
 const handleCancel = () => {
-  router.back()
+  // 使用replace而不是back，避免路由堆栈问题
+  router.replace('/merchant')
 }
 
 // Logo上传相关方法
-const beforeUpload = (file: File) => {
+const handleLogoChange = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  if (!target.files || target.files.length === 0) return
+
+  const file = target.files[0]
+
+  // 验证文件类型和大小
   const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png'
   if (!isJpgOrPng) {
     message.error('只能上传JPG/PNG格式的图片!')
-  }
-  const isLt2M = file.size / 1024 / 1024 < 2
-  if (!isLt2M) {
-    message.error('图片大小不能超过2MB!')
-  }
-  return isJpgOrPng && isLt2M
-}
-
-interface UploadChangeInfo {
-  file: {
-    status: string
-    originFileObj: File
-  }
-}
-
-const handleLogoChange = (info: UploadChangeInfo) => {
-  if (info.file.status === 'uploading') {
-    uploading.value = true
     return
   }
 
-  if (info.file.status === 'done') {
-    // 这里模拟上传成功后获取到的URL
-    // 实际项目中应该从上传接口的响应中获取URL
-    getBase64(info.file.originFileObj, (url: string) => {
-      uploading.value = false
-      form.value.logo = url
-    })
-  } else if (info.file.status === 'error') {
-    uploading.value = false
-    message.error('上传失败')
+  const isLt2M = file.size / 1024 / 1024 < 2
+  if (!isLt2M) {
+    message.error('图片大小不能超过2MB!')
+    return
   }
-}
 
-const getBase64 = (img: File, callback: (url: string) => void) => {
-  const reader = new FileReader()
-  reader.addEventListener('load', () => callback(reader.result as string))
-  reader.readAsDataURL(img)
+  uploading.value = true
+  try {
+    const merchantId = form.value.id
+    if (!merchantId) {
+      message.error('店铺ID不能为空')
+      return
+    }
+
+    // 创建FormData对象
+    const formData = new FormData()
+    formData.append('file', file)
+
+    // 调用更新logo接口
+    const res = await merchantUpdateLogo(
+      {
+        id: merchantId,
+      },
+      {},
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        data: formData,
+      },
+    )
+
+    if (res.data.code === 20000) {
+      // 更新成功后直接重新获取店铺信息
+      const refreshRes = await merchantGet({ id: merchantId })
+      if (refreshRes.data.code === 20000 && refreshRes.data.data) {
+        form.value.logo = refreshRes.data.data.logo
+        message.success('Logo更新成功')
+      }
+    } else {
+      message.error(res.data.msg || 'Logo更新失败')
+    }
+  } catch (error) {
+    console.error('Logo更新失败:', error)
+    message.error('网络异常，请重试')
+  } finally {
+    uploading.value = false
+    // 重置input，确保可以重复选择同一个文件
+    if (logoInput.value) {
+      logoInput.value.value = ''
+    }
+  }
 }
 
 const handleViewLogo = () => {
   previewVisible.value = true
 }
 
-const handleRemoveLogo = () => {
-  form.value.logo = ''
+const handleRemoveLogo = async () => {
+  try {
+    const merchantId = form.value.id
+    if (!merchantId) {
+      message.error('店铺ID不能为空')
+      return
+    }
+
+    const res = await merchantUpdateLogo(
+      {
+        id: merchantId,
+      },
+      {},
+      {},
+    )
+
+    if (res.data.code === 20000) {
+      form.value.logo = ''
+      message.success('Logo删除成功')
+    } else {
+      message.error(res.data.msg || 'Logo删除失败')
+    }
+  } catch (error) {
+    console.error('Logo删除失败:', error)
+    message.error('网络异常，请重试')
+  }
+}
+
+// 获取状态提示信息
+const getStatusTip = (status: string) => {
+  switch (status) {
+    case 'PENDING_REVIEW':
+      return '店铺正在审核中，暂时无法修改状态'
+    case 'REJECTED':
+      return '店铺审核未通过，请联系平台管理员'
+    case 'BANNED':
+      return '店铺已被封禁，无法修改状态'
+    default:
+      return ''
+  }
 }
 </script>
 
@@ -426,5 +639,32 @@ const handleRemoveLogo = () => {
   text-align: center;
   padding: 20px 0;
   color: rgba(0, 0, 0, 0.45);
+}
+
+.status-tip {
+  margin-top: 8px;
+}
+
+:deep(.ant-alert) {
+  margin-bottom: 16px;
+  font-size: 12px;
+}
+
+.logo-upload-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 200px;
+  height: 200px;
+  padding: 20px;
+  border: 1px dashed #d9d9d9;
+  border-radius: 8px;
+  justify-content: center;
+}
+
+.logo-upload-btn .ant-btn {
+  height: 40px;
+  width: 100%;
 }
 </style>

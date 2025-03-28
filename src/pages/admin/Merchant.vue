@@ -17,8 +17,12 @@
                 allow-clear
                 style="width: 100%"
               >
-                <a-select-option value="ENABLED">正常</a-select-option>
-                <a-select-option value="DISABLED">停用</a-select-option>
+                <a-select-option value="OPEN">营业中</a-select-option>
+                <a-select-option value="CLOSED">休息中</a-select-option>
+                <a-select-option value="SUSPENDED">暂停营业</a-select-option>
+                <a-select-option value="PENDING_REVIEW">待审核</a-select-option>
+                <a-select-option value="REJECTED">审核拒绝</a-select-option>
+                <a-select-option value="BANNED">已封禁</a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
@@ -88,8 +92,8 @@
           {{ `${record.openTime || '-'} - ${record.closeTime || '-'}` }}
         </template>
         <template v-if="column.key === 'status'">
-          <a-tag :color="record.status === 'ENABLED' ? 'success' : 'error'">
-            {{ record.status === 'ENABLED' ? '正常' : '停用' }}
+          <a-tag :color="getStatusColor(record.status)">
+            {{ getStatusText(record.status) }}
           </a-tag>
         </template>
         <template v-if="column.key === 'minPrice'">
@@ -106,13 +110,13 @@
               type="link"
               size="small"
               @click="handleUpdateStatus(record)"
-              :danger="record.status === 'ENABLED'"
+              :disabled="record.status === 'BANNED'"
             >
               <template #icon>
-                <check-circle-outlined v-if="record.status !== 'ENABLED'" />
+                <check-circle-outlined v-if="record.status === 'BANNED'" />
                 <stop-outlined v-else />
               </template>
-              {{ record.status === 'ENABLED' ? '停用' : '启用' }}
+              {{ record.status === 'BANNED' ? '解封' : '封禁' }}
             </a-button>
             <a-divider type="vertical" />
             <a-popconfirm
@@ -146,18 +150,18 @@
 
     <!-- 状态更新确认弹窗 -->
     <a-modal
-      v-model:visible="statusModalVisible"
-      :title="statusForm.status === 'ENABLED' ? '启用店铺' : '停用店铺'"
+      v-model:open="statusModalVisible"
+      :title="statusForm.status === 'OPEN' ? '启用店铺' : '停用店铺'"
       @ok="confirmUpdateStatus"
       :confirm-loading="statusModalLoading"
     >
-      <p>{{ statusForm.status === 'ENABLED' ? '确定要启用该店铺吗？' : '确定要停用该店铺吗？' }}</p>
+      <p>{{ statusForm.status === 'OPEN' ? '确定要启用该店铺吗？' : '确定要停用该店铺吗？' }}</p>
       <p>店铺名称：{{ statusForm.name }}</p>
     </a-modal>
 
     <!-- 详情弹窗 -->
     <a-drawer
-      v-model:visible="detailVisible"
+      v-model:open="detailVisible"
       title="店铺详情"
       placement="right"
       :width="600"
@@ -199,8 +203,8 @@
           <span class="price">¥{{ detailInfo.minPrice || 0 }}</span>
         </a-descriptions-item>
         <a-descriptions-item label="状态">
-          <a-tag :color="detailInfo.status === 'ENABLED' ? 'success' : 'error'">
-            {{ detailInfo.status === 'ENABLED' ? '正常' : '停用' }}
+          <a-tag :color="getStatusColor(detailInfo.status || '')">
+            {{ getStatusText(detailInfo.status || '') }}
           </a-tag>
         </a-descriptions-item>
         <a-descriptions-item label="店铺描述">
@@ -216,11 +220,11 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
-  getMerchantList1,
-  getMerchant1,
-  deleteMerchant,
-  updateMerchantStatus,
-} from '@/api/adminController'
+  merchants,
+  merchantGet,
+  merchantDelete,
+  merchantUpdateStatus,
+} from '@/api/merchantController'
 import {
   SearchOutlined,
   EyeOutlined,
@@ -274,11 +278,11 @@ const fetchData = async () => {
       pageNum: current.value,
       pageSize: pageSize.value,
     }
-    const res = await getMerchantList1(params, {
+    const res = await merchants(params, {
       name: searchForm.name || undefined,
       status: searchForm.status || undefined,
     })
-    if (res.data.code === 1) {
+    if (res.data.code === 20000) {
       merchantList.value = res.data.data?.records || []
       total.value = res.data.data?.total || 0
     } else {
@@ -319,8 +323,8 @@ const handlePageChange = () => {
 const handleDelete = async (record: API.MerchantVO) => {
   try {
     if (record.id) {
-      const res = await deleteMerchant({ id: Number(record.id) })
-      if (res.data.code === 1) {
+      const res = await merchantDelete({ id: record.id })
+      if (res.data.code === 20000) {
         message.success('删除成功')
         await fetchData()
       } else {
@@ -337,28 +341,28 @@ const handleDelete = async (record: API.MerchantVO) => {
 const statusModalVisible = ref(false)
 const statusModalLoading = ref(false)
 const statusForm = reactive({
-  id: 0,
+  id: '',
   name: '',
-  status: 'ENABLED',
+  status: 'OPEN',
 })
 
 const handleUpdateStatus = (record: API.MerchantVO) => {
-  statusForm.id = record.id ? Number(record.id) : 0
+  statusForm.id = record.id || ''
   statusForm.name = record.name || ''
-  statusForm.status = record.status === 'ENABLED' ? 'DISABLED' : 'ENABLED'
+  statusForm.status = record.status === 'BANNED' ? 'OPEN' : 'BANNED'
   statusModalVisible.value = true
 }
 
 const confirmUpdateStatus = async () => {
   statusModalLoading.value = true
   try {
-    const res = await updateMerchantStatus({
+    const res = await merchantUpdateStatus({
       id: statusForm.id,
       status: statusForm.status,
     })
-    if (res.data.code === 1) {
+    if (res.data.code === 20000) {
       message.success(
-        `${statusForm.status === 'ENABLED' ? '启用' : '停用'}店铺成功`
+        `${statusForm.status === 'BANNED' ? '封禁' : '解封'}店铺成功`
       )
       await fetchData()
       statusModalVisible.value = false
@@ -380,8 +384,8 @@ const detailInfo = ref<API.MerchantVO>({})
 const handleViewDetail = async (record: API.MerchantVO) => {
   try {
     if (record.id) {
-      const res = await getMerchant1({ id: Number(record.id) })
-      if (res.data.code === 1) {
+      const res = await merchantGet({ id: record.id })
+      if (res.data.code === 20000) {
         detailInfo.value = res.data.data || {}
         detailVisible.value = true
       } else {
@@ -397,8 +401,46 @@ const handleViewDetail = async (record: API.MerchantVO) => {
 // 编辑店铺
 const handleEdit = () => {
   if (detailInfo.value.id) {
-    router.push(`/admin/merchant/${Number(detailInfo.value.id)}`)
+    router.push(`/admin/merchant/${detailInfo.value.id}`)
     detailVisible.value = false
+  }
+}
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'OPEN':
+      return 'success'
+    case 'CLOSED':
+      return 'warning'
+    case 'SUSPENDED':
+      return 'error'
+    case 'PENDING_REVIEW':
+      return 'processing'
+    case 'REJECTED':
+      return 'error'
+    case 'BANNED':
+      return 'error'
+    default:
+      return 'default'
+  }
+}
+
+const getStatusText = (status: string) => {
+  switch (status) {
+    case 'OPEN':
+      return '营业中'
+    case 'CLOSED':
+      return '休息中'
+    case 'SUSPENDED':
+      return '暂停营业'
+    case 'PENDING_REVIEW':
+      return '待审核'
+    case 'REJECTED':
+      return '审核拒绝'
+    case 'BANNED':
+      return '已封禁'
+    default:
+      return '未知状态'
   }
 }
 

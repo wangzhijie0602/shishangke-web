@@ -5,11 +5,8 @@ import { useRouter } from 'vue-router'
 import {
   UserOutlined,
   LockOutlined,
-  MailOutlined,
-  PhoneOutlined,
-  IdcardOutlined,
 } from '@ant-design/icons-vue'
-import { register } from '@/api/userController'
+import { userRegister } from '@/api/userController'
 
 const router = useRouter()
 
@@ -18,9 +15,6 @@ const formState = reactive({
   username: '',
   password: '',
   confirmPassword: '',
-  nickname: '',
-  email: '',
-  phone: '',
 })
 
 // 注册按钮加载状态
@@ -48,13 +42,6 @@ const rules = {
       trigger: 'blur',
     },
   ],
-  nickname: [
-    { required: false, message: '请输入昵称', trigger: 'blur' },
-    { min: 3, message: '昵称过短', trigger: 'blur' },
-    { max: 255, message: '昵称过长', trigger: 'blur' },
-  ],
-  email: [{ type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }],
-  phone: [{ pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号码', trigger: 'blur' }],
 }
 
 // 处理注册
@@ -65,13 +52,10 @@ const handleRegister = async () => {
     const registerData = {
       username: formState.username,
       password: formState.password,
-      nickname: formState.nickname || undefined,
-      email: formState.email || undefined,
-      phone: formState.phone || undefined,
     }
 
-    const res = await register(registerData)
-    if (res.data.code === 1) {
+    const res = await userRegister(registerData)
+    if (res.data.code === 20000) {
       message.success('注册成功，请登录')
       // 跳转到登录页
       await router.push('/login')
@@ -127,30 +111,6 @@ const goToLogin = () => {
               <lock-outlined />
             </template>
           </a-input-password>
-        </a-form-item>
-
-        <a-form-item name="nickname">
-          <a-input v-model:value="formState.nickname" size="large" placeholder="请输入昵称（选填）">
-            <template #prefix>
-              <idcard-outlined />
-            </template>
-          </a-input>
-        </a-form-item>
-
-        <a-form-item name="email">
-          <a-input v-model:value="formState.email" size="large" placeholder="请输入邮箱（选填）">
-            <template #prefix>
-              <mail-outlined />
-            </template>
-          </a-input>
-        </a-form-item>
-
-        <a-form-item name="phone">
-          <a-input v-model:value="formState.phone" size="large" placeholder="请输入手机号（选填）">
-            <template #prefix>
-              <phone-outlined />
-            </template>
-          </a-input>
         </a-form-item>
 
         <a-form-item>

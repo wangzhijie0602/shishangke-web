@@ -33,8 +33,8 @@
             placeholder="请选择状态"
             allow-clear
           >
-            <a-select-option value="AVAILABLE">可用</a-select-option>
-            <a-select-option value="UNAVAILABLE">不可用</a-select-option>
+            <a-select-option value="ENABLED">启用</a-select-option>
+            <a-select-option value="DISABLED">禁用</a-select-option>
             <a-select-option value="SOLD_OUT">售罄</a-select-option>
           </a-select>
         </a-form-item>
@@ -79,16 +79,23 @@
                 :src="record.imageUrl"
                 alt="菜品图片"
                 class="menu-image"
-                @click="previewImage(record.imageUrl)"
               />
               <div v-else class="menu-image-placeholder">暂无图片</div>
             </div>
           </template>
           <template v-if="column.key === 'price'"> ¥{{ record.price?.toFixed(2) }}</template>
+          <template v-if="column.key === 'category'">
+            <a-tag :color="getCategoryColor(record.category)">
+              {{ getCategoryText(record.category) }}
+            </a-tag>
+          </template>
           <template v-if="column.key === 'status'">
             <span :style="{ color: getStatusColor(record.status) }">
               {{ getStatusText(record.status) }}
             </span>
+          </template>
+          <template v-if="column.key === 'createdAt'">
+            {{ formatDateTime(record.createdAt) }}
           </template>
           <template v-if="column.key === 'action'">
             <a-space>
@@ -109,7 +116,7 @@
 
     <!-- 添加/编辑菜单模态框 -->
     <a-modal
-      :visible="modalVisible"
+      :open="modalVisible"
       :title="editingMenu ? '编辑菜单' : '添加菜单'"
       @ok="handleSaveMenu"
       @cancel="() => (modalVisible = false)"
@@ -193,8 +200,8 @@
           <a-col :span="12">
             <a-form-item label="状态" name="status">
               <a-select v-model:value="menuForm.status">
-                <a-select-option value="AVAILABLE">可用</a-select-option>
-                <a-select-option value="UNAVAILABLE">不可用</a-select-option>
+                <a-select-option value="ENABLED">启用</a-select-option>
+                <a-select-option value="DISABLED">禁用</a-select-option>
                 <a-select-option value="SOLD_OUT">售罄</a-select-option>
               </a-select>
             </a-form-item>
@@ -202,13 +209,6 @@
         </a-row>
       </a-form>
     </a-modal>
-
-    <!-- 图片预览 -->
-    <a-image
-      :visible="previewVisible"
-      :src="previewImageUrl"
-      @visibleChange="(visible: boolean) => (previewVisible = visible)"
-    />
   </div>
 </template>
 
@@ -218,14 +218,14 @@ import { message } from 'ant-design-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import {
-  getMenuByMerchant,
-  create1 as createMenu,
-  update1 as updateMenu,
-  delete1 as deleteMenu,
-  getMenu,
-  uploadImage,
-} from '@/api/menuController'
-import { getMerchant } from '@/api/merchantController'
+  menuGetByMerchant,
+  menuCreate,
+  menuUpdate,
+  menuDelete,
+  menuGet,
+  menuUploadImage,
+} from '@/api/menuController.ts'
+import { merchantGet } from '@/api/merchantController.ts'
 
 // 路由相关
 const route = useRoute()
@@ -242,8 +242,6 @@ const uploadLoading = ref<boolean>(false)
 const modalVisible = ref<boolean>(false)
 const editingMenu = ref<API.MenuVO | null>(null)
 const menuList = ref<API.MenuVO[]>([])
-const previewVisible = ref<boolean>(false)
-const previewImageUrl = ref<string>('')
 
 // 分页配置
 const pagination = reactive({
@@ -268,9 +266,9 @@ const menuForm = reactive<API.MenuCreateRequest & { menuId?: string }>({
   name: '',
   description: '',
   price: 0,
-  category: '',
+  category: 'HOT_SALE',
   imageUrl: '',
-  status: 'AVAILABLE',
+  status: 'ENABLED',
   sortOrder: 0,
 })
 
@@ -335,15 +333,18 @@ const columns = [
 
 // 分类选项
 const categoryOptions = [
-  { value: '热菜', label: '热菜' },
-  { value: '凉菜', label: '凉菜' },
-  { value: '主食', label: '主食' },
-  { value: '汤品', label: '汤品' },
-  { value: '小吃', label: '小吃' },
-  { value: '甜点', label: '甜点' },
-  { value: '饮品', label: '饮品' },
-  { value: '酒水', label: '酒水' },
-  { value: '特色菜', label: '特色菜' },
+  { value: 'HOT_SALE', label: '热销菜品' },
+  { value: 'SPECIALTY', label: '特色菜品' },
+  { value: 'STAPLE_FOOD', label: '主食' },
+  { value: 'SNACK', label: '小吃/点心' },
+  { value: 'SOUP', label: '汤品' },
+  { value: 'COLD_DISH', label: '凉菜' },
+  { value: 'HOT_DISH', label: '热菜' },
+  { value: 'DESSERT', label: '甜点' },
+  { value: 'BEVERAGE', label: '饮料' },
+  { value: 'ALCOHOL', label: '酒水' },
+  { value: 'SET_MEAL', label: '套餐' },
+  { value: 'OTHER', label: '其他' },
 ]
 
 // 获取商家信息
@@ -351,8 +352,8 @@ const fetchMerchantInfo = async () => {
   if (!merchantId.value) return
 
   try {
-    const response = await getMerchant({ id: merchantId.value })
-    if (response.data.code === 1 && response.data.data) {
+    const response = await merchantGet({ id: merchantId.value })
+    if (response.data.code === 20000 && response.data.data) {
       merchantName.value = response.data.data.name || '未知商铺'
     }
   } catch (error) {
@@ -385,8 +386,8 @@ const fetchMenuByMerchant = async () => {
       maxPrice: searchForm.maxPrice,
     }
 
-    const response = await getMenuByMerchant(params, searchBody)
-    if (response.data.code === 1 && response.data.data) {
+    const response = await menuGetByMerchant(params, searchBody)
+    if (response.data.code === 20000 && response.data.data) {
       menuList.value = response.data.data.records || []
       pagination.total = response.data.data.total || 0
     } else {
@@ -424,13 +425,13 @@ const handleUpload = async (options: { file: File }) => {
     formData.append('file', file)
 
     // 调用上传接口
-    const response = await uploadImage(formData, {
+    const response = await menuUploadImage(formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     })
 
-    if (response.data.code === 1 && response.data.data) {
+    if (response.data.code === 20000 && response.data.data) {
       // 上传成功，设置图片URL
       menuForm.imageUrl = response.data.data
       message.success('图片上传成功')
@@ -469,8 +470,8 @@ const handleSaveMenu = async () => {
         sortOrder: menuForm.sortOrder,
       }
 
-      const response = await updateMenu(updateData)
-      if (response.data.code === 1) {
+      const response = await menuUpdate(updateData)
+      if (response.data.code === 20000) {
         message.success('菜单更新成功')
         modalVisible.value = false
         await fetchMenuByMerchant()
@@ -490,8 +491,8 @@ const handleSaveMenu = async () => {
         sortOrder: menuForm.sortOrder,
       }
 
-      const response = await createMenu(createData)
-      if (response.data.code === 1) {
+      const response = await menuCreate(createData)
+      if (response.data.code === 20000) {
         message.success('菜单创建成功')
         modalVisible.value = false
         await fetchMenuByMerchant()
@@ -507,8 +508,8 @@ const handleSaveMenu = async () => {
 // 删除菜单项
 const handleDeleteMenu = async (id: string) => {
   try {
-    const response = await deleteMenu({ id })
-    if (response.data.code === 1) {
+    const response = await menuDelete({ id })
+    if (response.data.code === 20000) {
       message.success('菜单删除成功')
       await fetchMenuByMerchant()
     } else {
@@ -524,8 +525,8 @@ const handleDeleteMenu = async (id: string) => {
 const handleEditMenu = async (record: API.MenuVO) => {
   if (record.menuId) {
     try {
-      const response = await getMenu({ id: record.menuId })
-      if (response.data.code === 1 && response.data.data) {
+      const response = await menuGet({ id: record.menuId })
+      if (response.data.code === 20000 && response.data.data) {
         editingMenu.value = response.data.data
 
         // 设置表单值
@@ -557,9 +558,9 @@ const handleAddMenu = () => {
     name: '',
     description: '',
     price: 0,
-    category: categoryOptions[0].value,
+    category: 'HOT_SALE',
     imageUrl: '',
-    status: 'AVAILABLE',
+    status: 'ENABLED',
     sortOrder: 0,
   })
 
@@ -600,8 +601,8 @@ const goBack = () => {
 // 获取状态文本
 const getStatusText = (status: string | undefined) => {
   const statusMap: Record<string, string> = {
-    AVAILABLE: '可用',
-    UNAVAILABLE: '不可用',
+    ENABLED: '启用',
+    DISABLED: '禁用',
     SOLD_OUT: '售罄',
   }
   return status ? statusMap[status] || status : ''
@@ -610,17 +611,66 @@ const getStatusText = (status: string | undefined) => {
 // 获取状态颜色
 const getStatusColor = (status: string | undefined) => {
   const colorMap: Record<string, string> = {
-    AVAILABLE: 'green',
-    UNAVAILABLE: 'red',
+    ENABLED: 'green',
+    DISABLED: 'red',
     SOLD_OUT: 'orange',
   }
   return status ? colorMap[status] || 'default' : 'default'
 }
 
-// 预览图片
-const previewImage = (url: string) => {
-  previewImageUrl.value = url
-  previewVisible.value = true
+// 获取分类文本
+const getCategoryText = (category: string | undefined) => {
+  const categoryMap: Record<string, string> = {
+    HOT_SALE: '热销菜品',
+    SPECIALTY: '特色菜品',
+    STAPLE_FOOD: '主食',
+    SNACK: '小吃/点心',
+    SOUP: '汤品',
+    COLD_DISH: '凉菜',
+    HOT_DISH: '热菜',
+    DESSERT: '甜点',
+    BEVERAGE: '饮料',
+    ALCOHOL: '酒水',
+    SET_MEAL: '套餐',
+    OTHER: '其他',
+  }
+  return category ? categoryMap[category] || category : ''
+}
+
+// 获取分类颜色
+const getCategoryColor = (category: string | undefined) => {
+  const colorMap: Record<string, string> = {
+    HOT_SALE: 'red',
+    SPECIALTY: 'orange',
+    STAPLE_FOOD: 'gold',
+    SNACK: 'lime',
+    SOUP: 'cyan',
+    COLD_DISH: 'blue',
+    HOT_DISH: 'volcano',
+    DESSERT: 'pink',
+    BEVERAGE: 'green',
+    ALCOHOL: 'purple',
+    SET_MEAL: 'magenta',
+    OTHER: 'default',
+  }
+  return category ? colorMap[category] || 'default' : 'default'
+}
+
+// 格式化日期时间
+const formatDateTime = (dateString: string | undefined) => {
+  if (!dateString) return ''
+
+  const date = new Date(dateString)
+
+  // 格式化为 YYYY-MM-DD HH:MM:SS
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
 // 初始加载

@@ -17,8 +17,12 @@
                 allow-clear
                 style="width: 100%"
               >
-                <a-select-option value="1">正常</a-select-option>
-                <a-select-option value="0">停用</a-select-option>
+                <a-select-option value="OPEN">营业中</a-select-option>
+                <a-select-option value="CLOSED">休息中</a-select-option>
+                <a-select-option value="SUSPENDED">暂停营业</a-select-option>
+                <a-select-option value="PENDING_REVIEW">待审核</a-select-option>
+                <a-select-option value="REJECTED">审核拒绝</a-select-option>
+                <a-select-option value="BANNED">已封禁</a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
@@ -61,6 +65,7 @@
       class="merchant-table"
       :scroll="{ x: 1200 }"
       bordered
+      :row-class-name="getRowClassName"
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'logo'">
@@ -92,36 +97,80 @@
           {{ `${record.openTime || '-'} - ${record.closeTime || '-'}` }}
         </template>
         <template v-if="column.key === 'status'">
-          <a-tag :color="record.status === 'AUTO' ? 'success' : 'error'">
-            {{ record.status === 'AUTO' ? '正常' : '停用' }}
-          </a-tag>
+          <a-tag v-if="record.status === 'OPEN'" color="success">营业中</a-tag>
+          <a-tag v-else-if="record.status === 'CLOSED'" color="orange">休息中</a-tag>
+          <a-tag v-else-if="record.status === 'SUSPENDED'" color="warning">暂停营业</a-tag>
+          <a-tag v-else-if="record.status === 'PENDING_REVIEW'" color="processing">待审核</a-tag>
+          <a-tag v-else-if="record.status === 'REJECTED'" color="error">审核拒绝</a-tag>
+          <a-tag v-else-if="record.status === 'BANNED'" color="red">已封禁</a-tag>
+          <a-tag v-else color="default">未知状态</a-tag>
         </template>
         <template v-if="column.key === 'minPrice'">
           <span class="price">¥{{ record.minPrice || 0 }}</span>
         </template>
         <template v-if="column.key === 'action'">
           <a-space>
-            <a-button type="link" size="small" @click="router.push(`/merchant/${record.id}`)">
-              <template #icon><eye-outlined /></template>
-              详情
-            </a-button>
-            <a-divider type="vertical" />
-            <a-button type="link" size="small" @click="router.push(`/menu/${record.id}`)">
-              <template #icon><menu-outlined /></template>
-              管理菜单
-            </a-button>
-            <a-divider type="vertical" />
-            <a-popconfirm
-              title="确定要删除该店铺吗？"
-              ok-text="确定"
-              cancel-text="取消"
-              @confirm="handleDelete(record)"
-            >
-              <a-button type="link" danger size="small">
-                <template #icon><delete-outlined /></template>
-                删除
+            <template v-if="['PENDING_REVIEW', 'REJECTED'].includes(record.status)">
+              <a-button type="link" size="small" @click="router.push(`/merchant/${record.id}`)">
+                <template #icon><eye-outlined /></template>
+                详情
               </a-button>
-            </a-popconfirm>
+              <a-divider type="vertical" />
+              <a-button type="link" size="small" disabled class="disabled-btn">
+                <template #icon><menu-outlined /></template>
+                管理菜单
+              </a-button>
+              <a-divider type="vertical" />
+              <a-popconfirm
+                title="确定要删除该店铺吗？"
+                ok-text="确定"
+                cancel-text="取消"
+                @confirm="handleDelete(record)"
+              >
+                <a-button type="link" danger size="small">
+                  <template #icon><delete-outlined /></template>
+                  删除
+                </a-button>
+              </a-popconfirm>
+            </template>
+
+            <template v-else-if="record.status === 'BANNED'">
+              <a-popconfirm
+                title="确定要删除该店铺吗？"
+                ok-text="确定"
+                cancel-text="取消"
+                @confirm="handleDelete(record)"
+              >
+                <a-button type="link" danger size="small">
+                  <template #icon><delete-outlined /></template>
+                  删除
+                </a-button>
+              </a-popconfirm>
+            </template>
+
+            <template v-else>
+              <a-button type="link" size="small" @click="router.push(`/merchant/${record.id}`)">
+                <template #icon><eye-outlined /></template>
+                详情
+              </a-button>
+              <a-divider type="vertical" />
+              <a-button type="link" size="small" @click="router.push(`/menu/${record.id}`)">
+                <template #icon><menu-outlined /></template>
+                管理菜单
+              </a-button>
+              <a-divider type="vertical" />
+              <a-popconfirm
+                title="确定要删除该店铺吗？"
+                ok-text="确定"
+                cancel-text="取消"
+                @confirm="handleDelete(record)"
+              >
+                <a-button type="link" danger size="small">
+                  <template #icon><delete-outlined /></template>
+                  删除
+                </a-button>
+              </a-popconfirm>
+            </template>
           </a-space>
         </template>
       </template>
@@ -161,7 +210,7 @@
         <a-form-item label="联系电话" name="phone">
           <a-input v-model:value="form.phone" placeholder="请输入联系电话" />
         </a-form-item>
-        <a-form-item label="所在地区" name="region" required>
+        <a-form-item label="所在地区" name="province">
           <area-cascader
             type="street"
             :value="areaValue"
@@ -181,31 +230,18 @@
             style="width: 100%"
           />
         </a-form-item>
-        <a-form-item label="店铺Logo" name="logo">
-          <a-upload
-            name="logo"
-            list-type="picture-card"
-            :show-upload-list="false"
-            :before-upload="() => false"
-            class="logo-uploader"
-          >
-            <div v-if="form.logo">
-              <img :src="form.logo" alt="logo" style="width: 100%" />
-            </div>
-            <div v-else class="upload-placeholder">
-              <plus-outlined />
-              <div style="margin-top: 8px">上传图片</div>
-            </div>
-          </a-upload>
-        </a-form-item>
       </a-form>
     </a-modal>
   </a-card>
 </template>
 
 <script setup lang="ts">
+defineOptions({
+  name: 'MerchantIndex'
+})
+
 import { ref, reactive, onMounted, computed } from 'vue'
-import { create, getMerchantList, deleteUsingGet } from '@/api/merchantController'
+import { merchantCreate, merchantList as getMerchantList, merchantDelete } from '@/api/merchantController'
 import { message } from 'ant-design-vue'
 import {
   SearchOutlined,
@@ -257,7 +293,6 @@ const form = reactive({
   name: '',
   phone: '',
   minPrice: 0,
-  logo: '',
   province: '',
   city: '',
   district: '',
@@ -290,7 +325,7 @@ const formRef = ref()
 const rules = {
   name: [{ required: true, message: '请输入店铺名称', trigger: 'blur' }],
   phone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
-  region: [{ required: true, message: '请选择所在地区', trigger: 'change' }],
+  province: [{ required: true, message: '请选择所在地区', trigger: 'change' }],
   addressDetail: [{ required: true, message: '请输入详细地址', trigger: 'blur' }],
   minPrice: [{ required: true, type: 'number', message: '请输入最低价格', trigger: 'change' }],
 }
@@ -304,7 +339,7 @@ const fetchData = async () => {
       pageSize: pageSize.value,
     }
     const res = await getMerchantList(params, searchForm)
-    if (res.data.code === 1) {
+    if (res.data.code === 20000) {
       merchantList.value = res.data.data?.records || []
       total.value = res.data.data?.total || 0
     } else {
@@ -347,7 +382,6 @@ const showCreateModal = () => {
   form.name = ''
   form.phone = ''
   form.minPrice = 0
-  form.logo = ''
   form.province = ''
   form.city = ''
   form.district = ''
@@ -360,14 +394,14 @@ const handleSave = async () => {
   try {
     await formRef.value.validate()
     modalLoading.value = true
-    const res = await create(form)
-    if (res.data.code === 1) {
+    const res = await merchantCreate(form)
+    if (res.data.code === 20000) {
       message.success('新增成功')
+      modalVisible.value = false
+      await fetchData()
     } else {
       message.error(res.data.msg || '新增失败')
     }
-    modalVisible.value = false
-    await fetchData()
   } catch (error) {
     console.error('表单验证失败:', error)
   } finally {
@@ -379,8 +413,8 @@ const handleSave = async () => {
 const handleDelete = async (record: API.MerchantVO) => {
   try {
     if (record.id) {
-      const res = await deleteUsingGet({ id: record.id })
-      if (res.data.code === 1) {
+      const res = await merchantDelete({ id: record.id })
+      if (res.data.code === 20000) {
         message.success('删除成功')
         await fetchData()
       } else {
@@ -391,6 +425,17 @@ const handleDelete = async (record: API.MerchantVO) => {
     console.error('删除失败:', error)
     message.error('网络异常，请重试')
   }
+}
+
+// 设置行样式
+const getRowClassName = (record: API.MerchantVO) => {
+  if (record.status === 'BANNED') {
+    return 'banned-row';
+  }
+  if (['PENDING_REVIEW', 'REJECTED'].includes(record.status as string)) {
+    return 'pending-review-row';
+  }
+  return '';
 }
 
 onMounted(() => {
@@ -496,5 +541,18 @@ onMounted(() => {
 
 :deep(.ant-upload-select-picture-card:hover) {
   border-color: #1890ff;
+}
+
+.disabled-btn {
+  color: rgba(0, 0, 0, 0.25) !important;
+  cursor: not-allowed !important;
+}
+
+:deep(.merchant-table .banned-row) {
+  background-color: #fff1f0;
+}
+
+:deep(.merchant-table .pending-review-row, .merchant-table .rejected-row) {
+  background-color: #f5f5f5;
 }
 </style>

@@ -3,7 +3,7 @@ import { ref, reactive } from 'vue'
 import { message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { UserOutlined, LockOutlined } from '@ant-design/icons-vue'
-import { login } from '@/api/userController'
+import { userLogin } from '@/api/userController'
 import { useUserInfoStore } from '@/stores/useUserInfoStore.ts'
 
 const router = useRouter()
@@ -29,14 +29,16 @@ const handleLogin = async () => {
   loading.value = true
   try {
     // 构建登录请求参数
-    const loginParams = {} as API.loginParams
+    const loginParams = {
+      remember: false
+    }
     const loginBody = {
       username: formState.username,
       password: formState.password,
     }
 
-    const res = await login(loginParams, loginBody)
-    if (res.data.code === 1) {
+    const res = await userLogin(loginParams, loginBody)
+    if (res.data.code === 20000) {
       message.success('登录成功')
       // 更新用户信息到 store
       await userInfoStore.fetchUserInfo()

@@ -20,15 +20,18 @@
       <!-- 用户信息展示栏 -->
       <a-col flex="120px">
         <div class="user-login-status">
-          <div v-if="userInfoStore.userInfo.id !== ''">
+          <template v-if="userInfoStore.userInfo.id">
             <a-dropdown>
               <a-space>
                 <a-avatar :src="userInfoStore.userInfo.avatar" />
-                {{ userInfoStore.userInfo.username }}
+                <span class="username">{{ userInfoStore.userInfo.nickname || userInfoStore.userInfo.username }}</span>
               </a-space>
               <template #overlay>
                 <a-menu>
-                  <a-menu-item @click="router.push('/user/info')"> 个人信息</a-menu-item>
+                  <a-menu-item @click="router.push('/user/info')">
+                    <UserOutlined />
+                    个人信息
+                  </a-menu-item>
                   <a-menu-item @click="showConfirm">
                     <LogoutOutlined />
                     退出登录
@@ -36,25 +39,29 @@
                 </a-menu>
               </template>
             </a-dropdown>
-          </div>
-          <div v-else>
-            <a-button type="primary" href="/login">登录</a-button>
-          </div>
+          </template>
+          <template v-else>
+            <a-space>
+              <a-button type="primary" href="/login">登录</a-button>
+              <a-button href="/register">注册</a-button>
+            </a-space>
+          </template>
         </div>
       </a-col>
     </a-row>
   </div>
 </template>
+
 <script lang="ts" setup>
 import { computed, h, ref } from 'vue'
-import { HomeOutlined, LogoutOutlined } from '@ant-design/icons-vue'
+import { HomeOutlined, LogoutOutlined, UserOutlined, ShopOutlined, DashboardOutlined } from '@ant-design/icons-vue'
 import { message, Modal } from 'ant-design-vue'
 import type { MenuProps } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
-import { useUserInfoStore } from '@/stores/useUserInfoStore.ts'
-import {  logout1 } from '@/api/userController.ts'
+import { useUserInfoStore } from '@/stores/useUserInfoStore'
 
 const userInfoStore = useUserInfoStore()
+const router = useRouter()
 
 // 未经过滤的菜单项
 const originItems = [
@@ -66,13 +73,13 @@ const originItems = [
   },
   {
     key: '/monitor',
-    icon: () => h(HomeOutlined),
+    icon: () => h(DashboardOutlined),
     label: '监控',
     title: '监控',
   },
   {
     key: '/admin',
-    icon: () => h(HomeOutlined),
+    icon: () => h(DashboardOutlined),
     label: '管理员',
     title: '管理员',
     children: [
@@ -100,7 +107,7 @@ const originItems = [
   },
   {
     key: '/merchant',
-    icon: () => h(HomeOutlined),
+    icon: () => h(ShopOutlined),
     label: '我的店铺',
     title: '我的店铺',
     children: [
@@ -121,13 +128,13 @@ const originItems = [
 // 根据权限过滤菜单项
 const filterMenus = (menus = [] as MenuProps['items']) => {
   return menus?.filter((menu) => {
+    if (!menu) return false
+
     // 管理员才能看到 /admin 开头的菜单
-    if (typeof menu?.key === 'string' && menu.key.startsWith('/admin')) {
-      const userInfo = userInfoStore.userInfo
-      if (!userInfo || userInfo.role !== 'ADMIN') {
-        return false
-      }
+    if (typeof menu.key === 'string' && menu.key.startsWith('/admin')) {
+      return userInfoStore.userInfo.role === 'ADMIN'
     }
+
     return true
   })
 }
@@ -135,19 +142,17 @@ const filterMenus = (menus = [] as MenuProps['items']) => {
 // 展示在菜单的路由数组
 const items = computed(() => filterMenus(originItems))
 
-const router = useRouter()
 // 当前要高亮的菜单项
 const current = ref<string[]>([])
+
 // 监听路由变化，更新高亮菜单项
 router.afterEach((to) => {
   current.value = [to.path]
 })
 
 // 路由跳转事件
-const doMenuClick = ({ key }: never) => {
-  router.push({
-    path: key,
-  })
+const doMenuClick = ({ key }: { key: string }) => {
+  router.push(key)
 }
 
 // 确认框
@@ -158,35 +163,65 @@ const showConfirm = () => {
     okText: '确定',
     cancelText: '取消',
     async onOk() {
-      const res = await logout1()
-      if (res.data.code === 1) {
-        await userInfoStore.initUserInfo()
+      try {
+        await userInfoStore.logout()
         message.success('退出登录成功')
         await router.push('/login')
-      } else {
-        message.error('退出登录失败，' + res.data.msg)
+      } catch (error) {
+        console.error(error)
+        message.error('退出登录失败，请重试')
       }
-    },
-    onCancel() {
-      console.log('Cancel')
     },
   })
 }
 </script>
 
 <style scoped>
-#globalHeader .title-bar {
+#globalHeader {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 0 24px;
+}
+
+.title-bar {
   display: flex;
   align-items: center;
+  height: 64px;
 }
 
 .title {
   color: black;
   font-size: 18px;
   margin-left: 16px;
+  font-weight: bold;
 }
 
 .logo {
   height: 48px;
+}
+
+.user-login-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 64px;
+}
+
+.username {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:deep(.ant-menu) {
+  border-bottom: none;
+}
+
+:deep(.ant-menu-item) {
+  padding: 0 20px;
+}
+
+:deep(.ant-space) {
+  gap: 8px !important;
 }
 </style>

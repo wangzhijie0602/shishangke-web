@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AAlert: typeof import('ant-design-vue/es')['Alert']
     AAvatar: typeof import('ant-design-vue/es')['Avatar']
     ABadge: typeof import('ant-design-vue/es')['Badge']
     AButton: typeof import('ant-design-vue/es')['Button']
@@ -36,6 +37,7 @@ declare module 'vue' {
     AMenuItem: typeof import('ant-design-vue/es')['MenuItem']
     AModal: typeof import('ant-design-vue/es')['Modal']
     APagination: typeof import('ant-design-vue/es')['Pagination']
+    APITest: typeof import('./src/components/APITest.vue')['default']
     APopconfirm: typeof import('ant-design-vue/es')['Popconfirm']
     ARangePicker: typeof import('ant-design-vue/es')['RangePicker']
     AreaCascader: typeof import('./src/components/AreaCascader/AreaCascader.vue')['default']
@@ -56,8 +58,11 @@ declare module 'vue' {
     AUpload: typeof import('ant-design-vue/es')['Upload']
     GlobalHeader: typeof import('./src/components/GlobalHeader.vue')['default']
     GlobalSider: typeof import('./src/components/GlobalSider.vue')['default']
+    Home: typeof import('./src/components/Home.vue')['default']
+    Monitor: typeof import('./src/components/Monitor.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    Test: typeof import('./src/components/Test.vue')['default']
     UserProfile: typeof import('./src/components/UserInfoPage.vue')['default']
   }
 }

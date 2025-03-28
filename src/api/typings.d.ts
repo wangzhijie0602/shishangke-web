@@ -1,40 +1,111 @@
 declare namespace API {
-  type banParams = {
-    id: string
+  type CreateRequest = {
+    username: string
+    password: string
+    nickname?: string
+    avatar?: string
+    role?: string
+    status?: string
   }
 
-  type cancelOrderParams = {
-    id: number
-    reason?: string
+  type CustomerAddressCreateRequest = {
+    receiverName: string
+    phone: string
+    province: string
+    city: string
+    district: string
+    detailAddress: string
+    tag?: string
+    isDefault?: number
+  }
+
+  type customerAddressDeleteParams = {
+    addressId: string
+  }
+
+  type customerAddressSetDefaultParams = {
+    addressId: string
+  }
+
+  type CustomerAddressUpdateRequest = {
+    id: string
+    receiverName: string
+    phone: string
+    province: string
+    city: string
+    district: string
+    detailAddress: string
+    tag?: string
+    isDefault?: number
+  }
+
+  type CustomerAddressVO = {
+    id?: string
+    customerId?: string
+    receiverName?: string
+    phone?: string
+    province?: string
+    city?: string
+    district?: string
+    detailAddress?: string
+    tag?: string
+    isDefault?: number
+    createdAt?: string
+    updatedAt?: string
+    isDeleted?: number
   }
 
   type CustomerCreateRequest = {
     username: string
     password: string
     realName?: string
+    avatar?: string
     gender?: string
     birthDate?: string
-    defaultAddress?: string
     preferences?: string
   }
 
-  type CustomerUpdateRequest = {
-    username: string
+  type customerGetMenuParams = {
+    merchantId: string
+  }
+
+  type customerGetMerchantParams = {
+    merchantId: string
+  }
+
+  type customerGetMerchantsParams = {
+    pageNumber?: number
+    pageSize?: number
+  }
+
+  type CustomerLoginRequest = {
+    username?: string
     password?: string
-    realName?: string
-    gender?: string
-    birthDate?: string
-    defaultAddress?: string
-    preferences?: string
+  }
+
+  type customerUpdateBirthdateParams = {
+    birthDate: string
+  }
+
+  type customerUpdateGenderParams = {
+    gender: string
+  }
+
+  type customerUpdateNicknameParams = {
+    nickname: string
+  }
+
+  type customerUpdatePreferencesParams = {
+    preferences: string
   }
 
   type CustomerVO = {
-    id?: number
+    id?: string
     username?: string
-    realName?: string
+    nickname?: string
+    avatar?: string
     gender?: string
     birthDate?: string
-    defaultAddress?: string
     preferences?: string
     vipLevel?: number
     points?: number
@@ -42,144 +113,36 @@ declare namespace API {
     updatedAt?: string
   }
 
-  type delete1Params = {
-    id: string
-  }
-
-  type delete2Params = {
-    id: string
-  }
-
-  type deleteMerchantParams = {
-    id: number
-  }
-
-  type deleteOrderParams = {
-    id: number
-  }
-
-  type deleteReview1Params = {
-    id: number
-  }
-
-  type deleteReviewParams = {
-    id: number
-  }
-
-  type deleteUsingGETParams = {
-    id: string
-  }
-
-  type getCustomerInfoParams = {
-    username: string
-  }
-
-  type getMenuByMerchantParams = {
-    merchantId: string
-    pageNum?: number
-    pageSize?: number
-  }
-
-  type getMenuListParams = {
-    pageNum?: number
-    pageSize?: number
-  }
-
-  type getMenuParams = {
-    id: string
-  }
-
-  type getMenuReviewsParams = {
-    menuId: number
-    pageNum?: number
-    pageSize?: number
-  }
-
-  type getMerchant1Params = {
-    id: number
-  }
-
-  type getMerchantList1Params = {
-    pageNum?: number
-    pageSize?: number
-  }
-
-  type getMerchantListParams = {
-    pageNum?: number
-    pageSize?: number
-  }
-
-  type getMerchantParams = {
-    id: string
-  }
-
-  type getMerchantReviewsParams = {
-    merchantId: number
-    pageNum?: number
-    pageSize?: number
-  }
-
-  type getOrderDetailParams = {
-    id: number
-  }
-
-  type getOrderListParams = {
-    pageNum?: number
-    pageSize?: number
-  }
-
-  type getParams = {
-    id: string
-  }
-
-  type getReview1Params = {
-    id: number
-  }
-
-  type getReviewList1Params = {
-    pageNum?: number
-    pageSize?: number
-  }
-
-  type getReviewListParams = {
-    pageNum?: number
-    pageSize?: number
-  }
-
-  type getReviewParams = {
-    id: number
-  }
-
-  type getRoleParams = {
-    id: string
-  }
-
-  type getUserListParams = {
-    pageNum?: number
-    pageSize?: number
-  }
-
-  type getUserReviews1Params = {
-    pageNum?: number
-    pageSize?: number
-  }
-
-  type getUserReviewsParams = {
-    pageNum?: number
-    pageSize?: number
-  }
-
-  type likeReviewParams = {
-    id: number
-  }
-
-  type login1Params = {
+  type LoginRequest = {
     username: string
     password: string
   }
 
-  type loginParams = {
-    remember?: boolean
+  type Menu = {
+    menuId?: number
+    merchantId?: number
+    name?: string
+    description?: string
+    price?: number
+    category?:
+      | '热销菜品'
+      | '特色菜品'
+      | '主食'
+      | '小吃/点心'
+      | '汤品'
+      | '凉菜'
+      | '热菜'
+      | '甜点'
+      | '饮料'
+      | '酒水'
+      | '套餐'
+      | '其他'
+    imageUrl?: string
+    status?: '启用' | '禁用' | '售罄'
+    sortOrder?: number
+    createdAt?: string
+    updatedAt?: string
+    isDeleted?: number
   }
 
   type MenuCreateRequest = {
@@ -187,70 +150,62 @@ declare namespace API {
     name: string
     description?: string
     price: number
-    category?: string
+    category?:
+      | '热销菜品'
+      | '特色菜品'
+      | '主食'
+      | '小吃/点心'
+      | '汤品'
+      | '凉菜'
+      | '热菜'
+      | '甜点'
+      | '饮料'
+      | '酒水'
+      | '套餐'
+      | '其他'
     imageUrl?: string
     status?: string
     sortOrder?: number
   }
 
+  type menuDeleteParams = {
+    id: string
+  }
+
+  type menuGetByMerchantParams = {
+    merchantId: string
+    pageNum?: number
+    pageSize?: number
+  }
+
+  type menuGetParams = {
+    id: string
+  }
+
+  type menuListParams = {
+    pageNum?: number
+    pageSize?: number
+  }
+
   type MenuQueryRequest = {
     merchantId?: string
     name?: string
-    category?: string
-    status?: string
+    category?:
+      | '热销菜品'
+      | '特色菜品'
+      | '主食'
+      | '小吃/点心'
+      | '汤品'
+      | '凉菜'
+      | '热菜'
+      | '甜点'
+      | '饮料'
+      | '酒水'
+      | '套餐'
+      | '其他'
+    status?: '启用' | '禁用' | '售罄'
     minPrice?: number
     maxPrice?: number
-  }
-
-  type MenuReviewCreateRequest = {
-    menuId: number
-    orderId: number
-    content?: string
-    rating: number
-    images?: string[]
-    tasteRating?: number
-    appearanceRating?: number
-    isAnonymous?: number
-  }
-
-  type MenuReviewQueryRequest = {
-    menuId?: number
-    userId?: number
-    minRating?: number
-    maxRating?: number
-    isAnonymous?: number
-    startTime?: string
-    endTime?: string
-  }
-
-  type MenuReviewUpdateRequest = {
-    reviewId: number
-    content?: string
-    rating?: number
-    images?: string[]
-    tasteRating?: number
-    appearanceRating?: number
-    isAnonymous?: number
-  }
-
-  type MenuReviewVO = {
-    reviewId?: number
-    userId?: number
-    username?: string
-    nickname?: string
-    avatar?: string
-    menuId?: number
-    menuName?: string
-    menuImageUrl?: string
-    orderId?: number
-    content?: string
-    rating?: number
-    images?: string[]
-    tasteRating?: number
-    appearanceRating?: number
-    isAnonymous?: number
-    likesCount?: number
-    createdAt?: string
   }
 
   type MenuUpdateRequest = {
@@ -259,9 +214,21 @@ declare namespace API {
     name?: string
     description?: string
     price?: number
-    category?: string
+    category?:
+      | '热销菜品'
+      | '特色菜品'
+      | '主食'
+      | '小吃/点心'
+      | '汤品'
+      | '凉菜'
+      | '热菜'
+      | '甜点'
+      | '饮料'
+      | '酒水'
+      | '套餐'
+      | '其他'
     imageUrl?: string
-    status?: string
+    status?: '启用' | '禁用' | '售罄'
     sortOrder?: number
   }
 
@@ -282,69 +249,80 @@ declare namespace API {
   type MerchantCreateRequest = {
     name?: string
     phone?: string
-  }
-
-  type MerchantQueryRequest = {
-    userId?: number
-    name?: string
-    phone?: string
-    status?: string
-  }
-
-  type MerchantReviewCreateRequest = {
-    merchantId: number
-    content?: string
-    rating: number
-    images?: string[]
-    isAnonymous?: number
-  }
-
-  type MerchantReviewQueryRequest = {
-    merchantId?: number
-    userId?: number
-    minRating?: number
-    maxRating?: number
-    isAnonymous?: number
-    startTime?: string
-    endTime?: string
-  }
-
-  type MerchantReviewUpdateRequest = {
-    reviewId: number
-    content?: string
-    rating?: number
-    images?: string[]
-    isAnonymous?: number
-  }
-
-  type MerchantReviewVO = {
-    reviewId?: number
-    userId?: number
-    username?: string
-    nickname?: string
-    avatar?: string
-    merchantId?: number
-    merchantName?: string
-    merchantLogo?: string
-    content?: string
-    rating?: number
-    images?: string[]
-    isAnonymous?: number
-    createdAt?: string
-  }
-
-  type MerchantUpdateRequest = {
-    id?: string
-    name?: string
-    phone?: string
     province?: string
     city?: string
     district?: string
     street?: string
     addressDetail?: string
-    description?: string
-    openTime?: string
-    closeTime?: string
+    minPrice?: number
+  }
+
+  type merchantDeleteParams = {
+    id: string
+  }
+
+  type merchantGetParams = {
+    id: string
+  }
+
+  type merchantListParams = {
+    pageNum?: number
+    pageSize?: number
+  }
+
+  type MerchantQueryRequest = {
+    name?: string
+    phone?: string
+    status?: string
+  }
+
+  type merchantsParams = {
+    pageNum?: number
+    pageSize?: number
+  }
+
+  type merchantUpdateAddressParams = {
+    id: string
+    province: string
+    city: string
+    district: string
+    street: string
+    addressDetail: string
+  }
+
+  type merchantUpdateBusinesshoursParams = {
+    id: string
+    openTime: string
+    closeTime: string
+  }
+
+  type merchantUpdateDescriptionParams = {
+    id: string
+    description: string
+  }
+
+  type merchantUpdateLogoParams = {
+    id: string
+  }
+
+  type merchantUpdateMinpriceParams = {
+    id: string
+    minPrice: number
+  }
+
+  type merchantUpdateNameParams = {
+    id: string
+    name: string
+  }
+
+  type merchantUpdatePhoneParams = {
+    id: string
+    phone: string
+  }
+
+  type merchantUpdateStatusParams = {
+    id: string
+    status: string
   }
 
   type MerchantVO = {
@@ -366,14 +344,31 @@ declare namespace API {
     createTime?: string
   }
 
+  type OrderAndItemVO = {
+    order?: OrderVO
+    orderItem?: OrderItemVO[]
+  }
+
+  type orderCancelOrderParams = {
+    id: string
+  }
+
+  type OrderCreateCompleteRequest = {
+    orderRequest?: OrderCreateRequest
+    orderItemRequests?: OrderItemCreateRequest[]
+  }
+
   type OrderCreateRequest = {
-    merchantId: number
-    totalAmount: number
-    address: string
-    phone: string
+    customerId?: string
+    merchantId?: string
+    receiverName?: string
+    receiverPhone?: string
+    receiverAddress?: string
     remark?: string
-    deliveryFee?: number
-    expectedTime?: string
+  }
+
+  type orderGetOrderAndItemParams = {
+    id: string
   }
 
   type OrderItem = {
@@ -381,45 +376,55 @@ declare namespace API {
     asc?: boolean
   }
 
+  type OrderItemCreateRequest = {
+    menuId?: string
+    quantity?: number
+  }
+
+  type OrderItemVO = {
+    id?: string
+    orderId?: string
+    menuId?: string
+    menuName?: string
+    quantity?: number
+    price?: number
+    totalPrice?: number
+    imageUrl?: string
+  }
+
+  type orderListOrderItemsParams = {
+    pageNum?: number
+    pageSize?: number
+  }
+
+  type orderListOrdersParams = {
+    pageNum?: number
+    pageSize?: number
+  }
+
   type OrderQueryRequest = {
-    status?: string
-    merchantId?: number
-    paymentStatus?: string
-    startTime?: string
-    endTime?: string
+    customerId?: string
+    merchantId?: string
+    status?: '待支付' | '已支付' | '准备中' | '配送中' | '已完成' | '已取消'
   }
 
   type OrderVO = {
-    orderId?: number
-    userId?: number
-    merchantId?: number
+    id?: string
+    customerId?: string
+    merchantId?: string
     merchantName?: string
-    orderNumber?: string
     totalAmount?: number
-    status?: string
-    paymentMethod?: string
-    paymentStatus?: string
-    address?: string
-    phone?: string
-    remark?: string
+    actualAmount?: number
+    status?: '待支付' | '已支付' | '准备中' | '配送中' | '已完成' | '已取消'
+    receiverName?: string
+    receiverPhone?: string
+    receiverAddress?: string
     deliveryFee?: number
-    expectedTime?: string
+    remark?: string
+    expectedDeliveryTime?: string
+    actualDeliveryTime?: string
     createdAt?: string
     updatedAt?: string
-  }
-
-  type PageMenuReviewVO = {
-    records?: MenuReviewVO[]
-    total?: number
-    size?: number
-    current?: number
-    orders?: OrderItem[]
-    optimizeCountSql?: PageMenuReviewVO
-    searchCount?: PageMenuReviewVO
-    optimizeJoinOfCountSql?: boolean
-    maxLimit?: number
-    countId?: string
-    pages?: number
   }
 
   type PageMenuVO = {
@@ -436,20 +441,6 @@ declare namespace API {
     pages?: number
   }
 
-  type PageMerchantReviewVO = {
-    records?: MerchantReviewVO[]
-    total?: number
-    size?: number
-    current?: number
-    orders?: OrderItem[]
-    optimizeCountSql?: PageMerchantReviewVO
-    searchCount?: PageMerchantReviewVO
-    optimizeJoinOfCountSql?: boolean
-    maxLimit?: number
-    countId?: string
-    pages?: number
-  }
-
   type PageMerchantVO = {
     records?: MerchantVO[]
     total?: number
@@ -458,6 +449,20 @@ declare namespace API {
     orders?: OrderItem[]
     optimizeCountSql?: PageMerchantVO
     searchCount?: PageMerchantVO
+    optimizeJoinOfCountSql?: boolean
+    maxLimit?: number
+    countId?: string
+    pages?: number
+  }
+
+  type PageOrderAndItemVO = {
+    records?: OrderAndItemVO[]
+    total?: number
+    size?: number
+    current?: number
+    orders?: OrderItem[]
+    optimizeCountSql?: PageOrderAndItemVO
+    searchCount?: PageOrderAndItemVO
     optimizeJoinOfCountSql?: boolean
     maxLimit?: number
     countId?: string
@@ -492,9 +497,27 @@ declare namespace API {
     pages?: number
   }
 
-  type payOrderParams = {
-    id: number
-    paymentMethod: string
+  type PasswordRequest = {
+    oldPassword?: string
+    newPassword: string
+  }
+
+  type QueryRequest = {
+    username?: string
+    phone?: string
+    nickname?: string
+    status?: string
+  }
+
+  type RegisterRequest = {
+    username: string
+    password: string
+  }
+
+  type ResultCustomerAddressVO = {
+    code?: number
+    msg?: string
+    data?: CustomerAddressVO
   }
 
   type ResultCustomerVO = {
@@ -503,10 +526,16 @@ declare namespace API {
     data?: CustomerVO
   }
 
-  type ResultInteger = {
+  type ResultListCustomerAddressVO = {
     code?: number
     msg?: string
-    data?: number
+    data?: CustomerAddressVO[]
+  }
+
+  type ResultListMenu = {
+    code?: number
+    msg?: string
+    data?: Menu[]
   }
 
   type ResultLong = {
@@ -515,22 +544,10 @@ declare namespace API {
     data?: number
   }
 
-  type ResultMenuReviewVO = {
-    code?: number
-    msg?: string
-    data?: MenuReviewVO
-  }
-
   type ResultMenuVO = {
     code?: number
     msg?: string
     data?: MenuVO
-  }
-
-  type ResultMerchantReviewVO = {
-    code?: number
-    msg?: string
-    data?: MerchantReviewVO
   }
 
   type ResultMerchantVO = {
@@ -539,16 +556,10 @@ declare namespace API {
     data?: MerchantVO
   }
 
-  type ResultOrderVO = {
+  type ResultOrderAndItemVO = {
     code?: number
     msg?: string
-    data?: OrderVO
-  }
-
-  type ResultPageMenuReviewVO = {
-    code?: number
-    msg?: string
-    data?: PageMenuReviewVO
+    data?: OrderAndItemVO
   }
 
   type ResultPageMenuVO = {
@@ -557,16 +568,16 @@ declare namespace API {
     data?: PageMenuVO
   }
 
-  type ResultPageMerchantReviewVO = {
-    code?: number
-    msg?: string
-    data?: PageMerchantReviewVO
-  }
-
   type ResultPageMerchantVO = {
     code?: number
     msg?: string
     data?: PageMerchantVO
+  }
+
+  type ResultPageOrderAndItemVO = {
+    code?: number
+    msg?: string
+    data?: PageOrderAndItemVO
   }
 
   type ResultPageOrderVO = {
@@ -619,181 +630,59 @@ declare namespace API {
     tag?: string
   }
 
-  type unbanParams = {
+  type userBanParams = {
     id: string
   }
 
-  type updateAddressParams = {
-    id: number
-    province: string
-    city: string
-    district: string
-    street: string
-    addressDetail: string
+  type userDeleteParams = {
+    id: string
   }
 
-  type updateBirthDateParams = {
-    birthDate: string
+  type userGetByIdParams = {
+    id: string
   }
 
-  type updateBusinessHoursParams = {
-    id: number
-    openTime: string
-    closeTime: string
+  type userListParams = {
+    pageNum?: number
+    pageSize?: number
   }
 
-  type updateDefaultAddressParams = {
-    defaultAddress: string
+  type userLoginParams = {
+    remember?: boolean
   }
 
-  type updateDescriptionParams = {
-    id: number
-    description: string
+  type userUnbanParams = {
+    id: string
   }
 
-  type updateEmailParams = {
+  type userUpdateAvatarParams = {
+    id: string
+  }
+
+  type userUpdateEmail1Params = {
+    id: string
     email: string
   }
 
-  type updateGenderParams = {
-    gender: string
+  type userUpdateEmailParams = {
+    email: string
   }
 
-  type updateLogoParams = {
-    id: number
-    logo: string
-  }
-
-  type updateMerchantAddressParams = {
-    id: number
-    province: string
-    city: string
-    district: string
-    street: string
-    addressDetail: string
-  }
-
-  type updateMerchantBusinessHoursParams = {
-    id: number
-    openTime: string
-    closeTime: string
-  }
-
-  type updateMerchantDescriptionParams = {
-    id: number
-    description: string
-  }
-
-  type updateMerchantLogoParams = {
-    id: number
-    logo: string
-  }
-
-  type updateMerchantMinPriceParams = {
-    id: number
-    minPrice: number
-  }
-
-  type updateMerchantNameParams = {
-    id: number
-    name: string
-  }
-
-  type updateMerchantPhoneParams = {
-    id: number
-    phone: string
-  }
-
-  type updateMerchantStatusParams = {
-    id: number
-    status: string
-  }
-
-  type updateMinPriceParams = {
-    id: number
-    minPrice: number
-  }
-
-  type updateNameParams = {
-    id: number
-    name: string
-  }
-
-  type updateNicknameParams = {
+  type userUpdateNickname1Params = {
+    id: string
     nickname: string
   }
 
-  type updateOrderStatusParams = {
-    id: number
-    status: string
+  type userUpdateNicknameParams = {
+    nickname: string
   }
 
-  type updatePhone1Params = {
-    id: number
-    phone: string
-  }
-
-  type updatePhoneParams = {
-    phone: string
-  }
-
-  type updatePreferencesParams = {
-    preferences: string
-  }
-
-  type updateRealNameParams = {
-    realName: string
-  }
-
-  type updateStatusParams = {
-    id: number
-    status: string
-  }
-
-  type UserChangePassword = {
-    oldPassword: string
-    newPassword: string
-  }
-
-  type UserCreateRequest = {
-    username: string
-    password: string
-    nickname?: string
-    email?: string
-    phone?: string
-  }
-
-  type UserInfoUpdateRequest = {
-    nickname?: string
-    email?: string
-    phone?: string
-  }
-
-  type UserLoginRequest = {
-    username: string
-    password: string
-  }
-
-  type UserQueryRequest = {
-    username?: string
-    phone?: string
-    nickname?: string
-    status?: string
-  }
-
-  type UserRegisterRequest = {
-    username: string
-    password: string
-  }
-
-  type UserUpdateRequest = {
+  type userUpdatePassword1Params = {
     id: string
-    username?: string
-    password?: string
-    nickname?: string
-    avatar?: string
-    email?: string
-    phone?: string
+  }
+
+  type userUpdatePhoneParams = {
+    phone: string
   }
 
   type UserVO = {

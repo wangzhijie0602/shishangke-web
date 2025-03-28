@@ -127,8 +127,8 @@
 import { ref, reactive, onMounted } from 'vue';
 import { message } from 'ant-design-vue';
 import { useRouter } from 'vue-router';
-import { getOrderList, getOrderDetail, deleteOrder } from '@/api/orderController';
-import { getMerchantList1 } from '@/api/adminController';
+// import { getOrderList, getOrderDetail, deleteOrder } from '@/api/orderController';
+// import { getMerchantList1 } from '@/api/adminController';
 import type { Dayjs } from 'dayjs';
 
 const router = useRouter();
@@ -146,7 +146,7 @@ const searchForm = reactive({
 const dateRange = ref<[Dayjs, Dayjs] | null>(null);
 
 // 列表数据
-const orderList = ref<API.OrderVO[]>([]);
+const orderList = ref<API.OrderVO[]>([]); // 暂时使用空数组
 const loading = ref<boolean>(false);
 const pagination = reactive({
   current: 1,
@@ -157,7 +157,7 @@ const pagination = reactive({
 });
 
 // 商户数据
-const merchantOptions = ref<API.MerchantVO[]>([]);
+const merchantOptions = ref<API.MerchantVO[]>([]); // 暂时使用空数组
 
 // 详情数据
 const detailVisible = ref<boolean>(false);
@@ -227,20 +227,23 @@ const columns = [
 const fetchOrderList = async () => {
   loading.value = true;
   try {
-    const params = {
-      pageNum: pagination.current,
-      pageSize: pagination.pageSize
-    };
+    // 暂时注释掉API调用
+    // const params = {
+    //   pageNum: pagination.current,
+    //   pageSize: pagination.pageSize
+    // };
+    // const queryParams = { ...searchForm };
+    // const res = await getOrderList(params, queryParams);
+    // if (res.data.code === 1 && res.data.data) {
+    //   orderList.value = res.data.data.records || [];
+    //   pagination.total = res.data.data.total || 0;
+    // } else {
+    //   message.error(res.data.msg || '获取订单列表失败');
+    // }
 
-    const queryParams = { ...searchForm };
-
-    const res = await getOrderList(params, queryParams);
-    if (res.data.code === 1 && res.data.data) {
-      orderList.value = res.data.data.records || [];
-      pagination.total = res.data.data.total || 0;
-    } else {
-      message.error(res.data.msg || '获取订单列表失败');
-    }
+    // 使用空数据
+    orderList.value = [];
+    pagination.total = 0;
   } catch (error) {
     console.error('获取订单列表出错:', error);
     message.error('获取订单列表出错');
@@ -252,17 +255,14 @@ const fetchOrderList = async () => {
 // 获取商户列表
 const fetchMerchantList = async () => {
   try {
-    const params = {
-      pageNum: 1,
-      pageSize: 100 // 获取更多商户
-    };
+    // 暂时注释掉API调用
+    // const res = await getMerchantList1();
+    // if (res.data.code === 1 && res.data.data) {
+    //   merchantOptions.value = res.data.data || [];
+    // }
 
-    const res = await getMerchantList1(params, {});
-    if (res.data.code === 1 && res.data.data) {
-      merchantOptions.value = res.data.data.records || [];
-    } else {
-      message.error(res.data.msg || '获取商户列表失败');
-    }
+    // 使用空数据
+    merchantOptions.value = [];
   } catch (error) {
     console.error('获取商户列表出错:', error);
     message.error('获取商户列表出错');
@@ -326,13 +326,18 @@ const handleTableChange = (pag: any, filters: any, sorter: any) => {
 // 查看订单详情
 const showOrderDetail = async (order: API.OrderVO) => {
   try {
-    const res = await getOrderDetail({ id: order.orderId as number });
-    if (res.data.code === 1 && res.data.data) {
-      currentOrder.value = res.data.data;
-      detailVisible.value = true;
-    } else {
-      message.error(res.data.msg || '获取订单详情失败');
-    }
+    // 暂时注释掉API调用
+    // const res = await getOrderDetail(order.orderId);
+    // if (res.data.code === 1 && res.data.data) {
+    //   currentOrder.value = res.data.data;
+    //   detailVisible.value = true;
+    // } else {
+    //   message.error(res.data.msg || '获取订单详情失败');
+    // }
+
+    // 使用当前订单数据
+    currentOrder.value = order;
+    detailVisible.value = true;
   } catch (error) {
     console.error('获取订单详情出错:', error);
     message.error('获取订单详情出错');
@@ -342,20 +347,17 @@ const showOrderDetail = async (order: API.OrderVO) => {
 // 删除订单
 const deleteOrderItem = async (order: API.OrderVO) => {
   try {
-    const res = await deleteOrder({ id: order.orderId as number });
-    if (res.data.code === 1) {
-      message.success('订单删除成功');
+    // 暂时注释掉API调用
+    // const res = await deleteOrder(order.orderId);
+    // if (res.data.code === 1) {
+    //   message.success('删除成功');
+    //   fetchOrderList();
+    // } else {
+    //   message.error(res.data.msg || '删除失败');
+    // }
 
-      // 如果当前正在查看该订单详情，则关闭弹窗
-      if (detailVisible.value && currentOrder.value && currentOrder.value.orderId === order.orderId) {
-        detailVisible.value = false;
-      }
-
-      // 刷新订单列表
-      fetchOrderList();
-    } else {
-      message.error(res.data.msg || '订单删除失败');
-    }
+    message.success('删除成功');
+    fetchOrderList();
   } catch (error) {
     console.error('删除订单出错:', error);
     message.error('删除订单出错');

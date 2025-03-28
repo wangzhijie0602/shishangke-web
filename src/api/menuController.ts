@@ -3,9 +3,9 @@
 import request from '@/requests'
 
 /** 此处后端没有提供注释 GET /api/v1/menu/${param0}/delete */
-export async function delete1(
+export async function menuDelete(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
-  params: API.delete1Params,
+  params: API.menuDeleteParams,
   options?: { [key: string]: any }
 ) {
   const { id: param0, ...queryParams } = params
@@ -17,9 +17,9 @@ export async function delete1(
 }
 
 /** 此处后端没有提供注释 GET /api/v1/menu/${param0}/get */
-export async function getMenu(
+export async function menuGet(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
-  params: API.getMenuParams,
+  params: API.menuGetParams,
   options?: { [key: string]: any }
 ) {
   const { id: param0, ...queryParams } = params
@@ -31,8 +31,8 @@ export async function getMenu(
 }
 
 /** 此处后端没有提供注释 POST /api/v1/menu/create */
-export async function create1(body: API.MenuCreateRequest, options?: { [key: string]: any }) {
-  return request<API.ResultInteger>('/api/v1/menu/create', {
+export async function menuCreate(body: API.MenuCreateRequest, options?: { [key: string]: any }) {
+  return request<API.ResultString>('/api/v1/menu/create', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -43,9 +43,9 @@ export async function create1(body: API.MenuCreateRequest, options?: { [key: str
 }
 
 /** 此处后端没有提供注释 POST /api/v1/menu/list */
-export async function getMenuList(
+export async function menuList(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
-  params: API.getMenuListParams,
+  params: API.menuListParams,
   body: API.MenuQueryRequest,
   options?: { [key: string]: any }
 ) {
@@ -67,9 +67,9 @@ export async function getMenuList(
 }
 
 /** 此处后端没有提供注释 POST /api/v1/menu/merchant/${param0} */
-export async function getMenuByMerchant(
+export async function menuGetByMerchant(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
-  params: API.getMenuByMerchantParams,
+  params: API.menuGetByMerchantParams,
   body: API.MenuQueryRequest,
   options?: { [key: string]: any }
 ) {
@@ -92,7 +92,7 @@ export async function getMenuByMerchant(
 }
 
 /** 此处后端没有提供注释 POST /api/v1/menu/update */
-export async function update1(body: API.MenuUpdateRequest, options?: { [key: string]: any }) {
+export async function menuUpdate(body: API.MenuUpdateRequest, options?: { [key: string]: any }) {
   return request<API.ResultString>('/api/v1/menu/update', {
     method: 'POST',
     headers: {
@@ -104,7 +104,7 @@ export async function update1(body: API.MenuUpdateRequest, options?: { [key: str
 }
 
 /** 此处后端没有提供注释 POST /api/v1/menu/upload/image */
-export async function uploadImage(body: {}, options?: { [key: string]: any }) {
+export async function menuUploadImage(body: {}, options?: { [key: string]: any }) {
   return request<API.ResultString>('/api/v1/menu/upload/image', {
     method: 'POST',
     headers: {

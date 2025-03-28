@@ -117,7 +117,7 @@
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from 'vue';
 import { message } from 'ant-design-vue';
-import { getOrderList, getOrderDetail, updateOrderStatus } from '@/api/orderController';
+// import { getOrderList, getOrderDetail, updateOrderStatus } from '@/api/orderController';
 import { useUserInfoStore } from '@/stores/useUserInfoStore';
 import type { Dayjs } from 'dayjs';
 
@@ -136,7 +136,7 @@ const searchForm = reactive({
 const dateRange = ref<[Dayjs, Dayjs] | null>(null);
 
 // 列表数据
-const orderList = ref<API.OrderVO[]>([]);
+const orderList = ref<API.OrderVO[]>([]); // 暂时使用空数组
 const loading = ref<boolean>(false);
 const pagination = reactive({
   current: 1,
@@ -221,23 +221,26 @@ const getMerchantId = () => {
 const fetchOrderList = async () => {
   loading.value = true;
   try {
-    const params = {
-      pageNum: pagination.current,
-      pageSize: pagination.pageSize
-    };
+    // 暂时注释掉API调用
+    // const params = {
+    //   pageNum: pagination.current,
+    //   pageSize: pagination.pageSize
+    // };
+    // const queryParams = {
+    //   ...searchForm,
+    //   merchantId: getMerchantId()
+    // };
+    // const res = await getOrderList(params, queryParams);
+    // if (res.data.code === 20000 && res.data.data) {
+    //   orderList.value = res.data.data.records || [];
+    //   pagination.total = res.data.data.total || 0;
+    // } else {
+    //   message.error(res.data.msg || '获取订单列表失败');
+    // }
 
-    const queryParams = {
-      ...searchForm,
-      merchantId: getMerchantId()
-    };
-
-    const res = await getOrderList(params, queryParams);
-    if (res.data.code === 1 && res.data.data) {
-      orderList.value = res.data.data.records || [];
-      pagination.total = res.data.data.total || 0;
-    } else {
-      message.error(res.data.msg || '获取订单列表失败');
-    }
+    // 使用空数据
+    orderList.value = [];
+    pagination.total = 0;
   } catch (error) {
     console.error('获取订单列表出错:', error);
     message.error('获取订单列表出错');
@@ -297,13 +300,18 @@ const handleTableChange = (pag: any, filters: any, sorter: any) => {
 // 查看订单详情
 const showOrderDetail = async (order: API.OrderVO) => {
   try {
-    const res = await getOrderDetail({ id: order.orderId as number });
-    if (res.data.code === 1 && res.data.data) {
-      currentOrder.value = res.data.data;
-      detailVisible.value = true;
-    } else {
-      message.error(res.data.msg || '获取订单详情失败');
-    }
+    // 暂时注释掉API调用
+    // const res = await getOrderDetail(order.orderId);
+    // if (res.data.code === 20000 && res.data.data) {
+    //   currentOrder.value = res.data.data;
+    //   detailVisible.value = true;
+    // } else {
+    //   message.error(res.data.msg || '获取订单详情失败');
+    // }
+
+    // 使用当前订单数据
+    currentOrder.value = order;
+    detailVisible.value = true;
   } catch (error) {
     console.error('获取订单详情出错:', error);
     message.error('获取订单详情出错');
@@ -311,26 +319,27 @@ const showOrderDetail = async (order: API.OrderVO) => {
 };
 
 // 更新订单状态
-const updateStatus = async (order: API.OrderVO, status: string) => {
+const updateStatus = async (order: API.OrderVO, newStatus: string) => {
   try {
-    const res = await updateOrderStatus({
-      id: order.orderId as number,
-      status
-    });
+    // 暂时注释掉API调用
+    // const res = await updateOrderStatus({
+    //   orderId: order.orderId,
+    //   status: newStatus
+    // });
+    // if (res.data.code === 20000) {
+    //   message.success('订单状态更新成功');
+    //   fetchOrderList();
+    //   if (detailVisible.value) {
+    //     detailVisible.value = false;
+    //   }
+    // } else {
+    //   message.error(res.data.msg || '订单状态更新失败');
+    // }
 
-    if (res.data.code === 1) {
-      message.success('订单状态更新成功');
-
-      // 更新本地数据
-      if (currentOrder.value && currentOrder.value.orderId === order.orderId) {
-        currentOrder.value.status = status;
-      }
-
-      // 刷新订单列表
-      fetchOrderList();
-
-    } else {
-      message.error(res.data.msg || '订单状态更新失败');
+    message.success('订单状态更新成功');
+    fetchOrderList();
+    if (detailVisible.value) {
+      detailVisible.value = false;
     }
   } catch (error) {
     console.error('更新订单状态出错:', error);

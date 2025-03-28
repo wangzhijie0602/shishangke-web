@@ -117,10 +117,14 @@
               <span
                 :class="[
                   'status-badge',
-                  userInfo.status === 'ENABLED' ? 'status-normal' : 'status-disabled',
+                  {
+                    'status-normal': userInfo.status === 'ACTIVE',
+                    'status-disabled': userInfo.status === 'DISABLED',
+                    'status-locked': userInfo.status === 'LOCKED'
+                  }
                 ]"
               >
-                {{ userInfo.status === 'ENABLED' ? '正常' : '已禁用' }}
+                {{ getStatusText(userInfo.status) }}
               </span>
             </div>
           </div>
@@ -147,10 +151,14 @@
 
 <script setup lang="ts">
 import { onMounted, ref, reactive } from 'vue'
-import { current, updatePassword, uploadAvatar, updateInfo } from '@/api/userController'
+import { userGetCurrent, userUpdatePassword, userUpdateAvatar1, userUpdateNickname, userUpdateEmail, userUpdatePhone } from '@/api/userController'
 import { useUserInfoStore } from '@/stores/useUserInfoStore.ts'
 import dayjs from 'dayjs'
 import { message } from 'ant-design-vue'
+
+defineOptions({
+  name: 'UserInfo'
+})
 
 const userInfoStore = useUserInfoStore()
 const userInfo = ref(userInfoStore.userInfo)
@@ -179,15 +187,18 @@ const editForm = reactive({
 
 // 获取角色名称
 const getRoleName = (roleCode: string | undefined) => {
-  if (!roleCode) return '普通用户'
+  if (!roleCode) return '未知角色'
 
   const roleMap: Record<string, string> = {
-    ADMIN: '管理员',
-    USER: '普通用户',
-    MERCHANT: '商家',
+    ADMIN: '系统管理员',
+    BOSS: '老板',
+    MANAGER: '店长',
+    CHEF: '厨师',
+    CUSTOMER: '顾客',
+    DELIVERY: '配送员'
   }
 
-  return roleMap[roleCode] || '普通用户'
+  return roleMap[roleCode] || '未知角色'
 }
 
 const formatTime = (time: string | undefined) => {
@@ -199,10 +210,14 @@ const uploadAvatarHandler = async (file: File) => {
   try {
     const formData = new FormData()
     formData.append('file', file)
-    // 使用类型断言避免类型冲突
-    await uploadAvatar(formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-    // 更新用户信息
-    await refreshUserInfo()
+    const res = await userUpdateAvatar1(formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+    if (res.data.code === 20000) {
+      message.success('头像上传成功')
+      // 更新用户信息
+      await refreshUserInfo()
+    } else {
+      message.error(res.data.msg || '头像上传失败')
+    }
   } catch (error) {
     console.error('头像上传失败:', error)
     message.error('头像上传失败，请重试')
@@ -228,14 +243,18 @@ const submitPasswordChange = async () => {
   }
 
   try {
-    await updatePassword({
+    const res = await userUpdatePassword({
       oldPassword: oldPassword.value,
       newPassword: newPassword.value,
     })
-    showPasswordForm.value = false
-    oldPassword.value = ''
-    newPassword.value = ''
-    message.success('密码修改成功')
+    if (res.data.code === 20000) {
+      showPasswordForm.value = false
+      oldPassword.value = ''
+      newPassword.value = ''
+      message.success('密码修改成功')
+    } else {
+      message.error(res.data.msg || '密码修改失败')
+    }
   } catch (error) {
     console.error('密码修改失败:', error)
     message.error('密码修改失败，请确认旧密码是否正确')
@@ -250,67 +269,77 @@ const startEdit = (field: keyof typeof editMode) => {
       editMode[key as keyof typeof editMode] = false
     }
   })
-
   // 设置当前字段为编辑状态
   editMode[field] = true
-
-  // 初始化编辑表单
-  if (userInfo.value) {
-    editForm.id = userInfo.value.id || ''
-    editForm[field] = userInfo.value[field] || ''
-  }
+  // 设置编辑表单的值
+  editForm[field] = userInfo.value?.[field] || ''
 }
 
 // 取消编辑
 const cancelEdit = (field: keyof typeof editMode) => {
   editMode[field] = false
+  editForm[field] = ''
 }
 
 // 保存编辑
 const saveEdit = async (field: keyof typeof editMode) => {
-  if (!userInfo.value || !userInfo.value.id) {
-    message.error('用户信息不完整，无法保存')
-    return
-  }
-
   try {
-    await updateInfo({
-      [field]: editForm[field],
-    })
-
-    // 更新本地状态
-    if (userInfo.value) {
-      userInfo.value[field] = editForm[field]
+    let res
+    switch (field) {
+      case 'nickname':
+        res = await userUpdateNickname({ nickname: editForm.nickname })
+        break
+      case 'email':
+        res = await userUpdateEmail({ email: editForm.email })
+        break
+      case 'phone':
+        res = await userUpdatePhone({ phone: editForm.phone })
+        break
     }
-
-    // 更新store中的用户信息
-    await userInfoStore.setUserInfo(userInfo.value)
-
-    // 关闭编辑模式
-    editMode[field] = false
-
-    message.success(
-      `${field === 'nickname' ? '昵称' : field === 'email' ? '邮箱' : '电话'}修改成功`,
-    )
+    if (res?.data.code === 20000) {
+      message.success(`${field} 更新成功`)
+      editMode[field] = false
+      // 更新用户信息
+      await refreshUserInfo()
+    } else {
+      message.error(res?.data.msg || `${field} 更新失败`)
+    }
   } catch (error) {
-    console.error('信息更新失败:', error)
-    message.error('信息更新失败，请重试')
+    console.error(`${field} 更新失败:`, error)
+    message.error(`${field} 更新失败，请重试`)
   }
 }
 
 // 刷新用户信息
 const refreshUserInfo = async () => {
   try {
-    const res = await current()
-    if (res.data.data) {
-      await userInfoStore.setUserInfo(res.data.data)
+    const res = await userGetCurrent()
+    if (res.data.code === 20000 && res.data.data) {
       userInfo.value = res.data.data
+      userInfoStore.setUserInfo(res.data.data)
+    } else {
+      message.error(res.data.msg || '获取用户信息失败')
     }
   } catch (error) {
     console.error('获取用户信息失败:', error)
+    message.error('获取用户信息失败，请重试')
   }
 }
 
+// 在 script setup 部分添加 getStatusText 函数
+const getStatusText = (status: string | undefined) => {
+  if (!status) return '未知'
+
+  const statusMap: Record<string, string> = {
+    ACTIVE: '正常',
+    DISABLED: '已禁用',
+    LOCKED: '已锁定'
+  }
+
+  return statusMap[status] || '未知'
+}
+
+// 页面加载时获取用户信息
 onMounted(async () => {
   await refreshUserInfo()
 })
@@ -543,6 +572,12 @@ onMounted(async () => {
   background-color: #fff1f0;
   color: #ff4d4f;
   border: 1px solid #ffa39e;
+}
+
+.status-locked {
+  background-color: #fff7e6;
+  color: #fa8c16;
+  border: 1px solid #ffd591;
 }
 
 /* 加载中样式 */
